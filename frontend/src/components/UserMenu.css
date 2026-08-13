@@ -1,0 +1,450 @@
+/* ── Wrapper ── */
+.um-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Avatar button ── */
+.um-avatar-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2.5px solid #16a34a;
+  background: #1e293b;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.um-avatar-btn:hover {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18);
+}
+
+.um-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.um-avatar-initials {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+/* ── Dropdown ── */
+.um-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+  min-width: 200px;
+  z-index: 9999;
+  overflow: hidden;
+  animation: umSlideDown 0.18s ease;
+}
+
+@keyframes umSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.um-dropdown-header {
+  padding: 14px 18px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.um-dd-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.um-dd-role {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+.um-divider {
+  border: none;
+  border-top: 1px solid #f1f5f9;
+  margin: 0;
+}
+
+.um-dd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1e293b;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.um-dd-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.um-dd-item:hover {
+  background: #f8fafc;
+}
+
+.um-dd-logout {
+  color: #dc2626;
+}
+
+.um-dd-logout:hover {
+  background: #fff5f5;
+}
+
+/* ── Modal Overlay ── */
+.um-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: umFadeIn 0.2s ease;
+}
+
+@keyframes umFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal Box ── */
+.um-modal {
+  background: #fff;
+  border-radius: 20px;
+  width: 640px;
+  max-width: 95vw;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  animation: umSlideUp 0.22s ease;
+}
+
+@keyframes umSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.um-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+  border-radius: 20px 20px 0 0;
+}
+
+.um-modal-header h3 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.um-modal-close {
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.um-modal-close:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.um-loading {
+  padding: 48px;
+  text-align: center;
+  color: #64748b;
+  font-size: 15px;
+}
+
+.um-modal-body {
+  padding: 24px 28px 28px;
+}
+
+/* ── Avatar Section ── */
+.um-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 8px;
+}
+
+.um-avatar-large {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #0f766e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  border: 3px solid #e2e8f0;
+  transition: border-color 0.2s;
+}
+
+.um-avatar-large:hover {
+  border-color: #16a34a;
+}
+
+.um-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.um-avatar-large span {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.um-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 50%;
+}
+
+.um-avatar-large:hover .um-avatar-overlay {
+  opacity: 1;
+}
+
+.um-avatar-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.um-success {
+  font-size: 13px;
+  color: #16a34a;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ── Info Grid ── */
+.um-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.um-info-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f8fafc;
+  gap: 12px;
+}
+
+.um-info-row:last-child {
+  border-bottom: none;
+}
+
+.um-info-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.um-info-row span {
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.um-empty {
+  color: #94a3b8 !important;
+  font-style: italic;
+  font-weight: 400 !important;
+}
+
+.um-edit-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.um-edit-input:focus {
+  border-color: #16a34a;
+}
+
+/* ── Role Badge ── */
+.um-role-badge {
+  display: inline-block;
+  background: #dcfce7;
+  color: #15803d;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Status Badge ── */
+.um-status-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.um-status-badge.verified,
+.um-status-badge.true {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.um-status-badge.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.um-status-badge.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Role-Specific Section ── */
+.um-role-section {
+  margin-top: 20px;
+}
+
+.um-role-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* ── Modal Actions ── */
+.um-modal-actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 12px;
+}
+
+.um-btn-edit,
+.um-btn-save,
+.um-btn-cancel {
+  padding: 11px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.um-btn-edit:active,
+.um-btn-save:active,
+.um-btn-cancel:active {
+  transform: scale(0.97);
+}
+
+.um-btn-edit {
+  background: #1e293b;
+  color: #fff;
+}
+
+.um-btn-edit:hover {
+  background: #334155;
+}
+
+.um-btn-save {
+  background: #16a34a;
+  color: #fff;
+}
+
+.um-btn-save:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.um-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.um-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.um-btn-cancel:hover {
+  background: #e2e8f0;
+}

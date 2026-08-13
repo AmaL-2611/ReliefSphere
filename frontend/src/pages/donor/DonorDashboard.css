@@ -1,0 +1,68 @@
+/* Shared dashboard shell styles — used by Donor, Organization, Volunteer */
+
+.dash-root {
+  min-height: 100vh;
+  background: #f1f5f9;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* ── Top Bar ── */
+.dash-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 64px;
+  background: #cacfd6;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.dash-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dash-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dash-logo-icon {
+  font-size: 22px;
+}
+
+.dash-logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.dash-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── Main Content ── */
+.dash-main {
+  padding: 36px 32px;
+}
+
+.dash-welcome {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+
+.dash-subtitle {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0;
+}
