@@ -52,7 +52,15 @@ function App() {
         />
 
         <Route
-          path="/organization-dashboard"
+          path="/organization-dashboard/*"
+          element={
+            <ProtectedRoute allowedRole="recipient_org">
+              <OrganizationDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organization/*"
           element={
             <ProtectedRoute allowedRole="recipient_org">
               <OrganizationDashboard />
@@ -61,7 +69,15 @@ function App() {
         />
 
         <Route
-          path="/volunteer-dashboard"
+          path="/volunteer-dashboard/*"
+          element={
+            <ProtectedRoute allowedRole="volunteer">
+              <VolunteerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/volunteer/*"
           element={
             <ProtectedRoute allowedRole="volunteer">
               <VolunteerDashboard />

@@ -1,0 +1,333 @@
+/* ============================================================
+   ReliefSphere AI — Volunteer Module Theme & Component Styles
+   Theme Accent: Indigo & Blue (#4f46e5 / #6366f1 / #3b82f6)
+   ============================================================ */
+
+:root {
+  --vol-primary: #4f46e5;
+  --vol-primary-dark: #4338ca;
+  --vol-primary-light: #e0e7ff;
+  --vol-secondary: #6366f1;
+  --vol-dark: #0f172a;
+  --vol-sidebar-bg: #0f172a;
+  --vol-sidebar-text: #94a3b8;
+  --vol-bg: #f8fafc;
+  --vol-card-bg: #ffffff;
+  --vol-text-main: #1e293b;
+  --vol-text-sub: #64748b;
+  --vol-border: #e2e8f0;
+  --vol-radius: 16px;
+  --vol-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  --vol-shadow-hover: 0 10px 30px rgba(79, 70, 229, 0.14);
+}
+
+/* ── Layout Shell ── */
+.vol-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--vol-bg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: var(--vol-text-main);
+}
+
+.vol-main {
+  flex: 1;
+  margin-left: 260px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: margin-left 0.3s ease;
+}
+
+@media (max-width: 992px) {
+  .vol-main {
+    margin-left: 0;
+  }
+}
+
+.vol-content {
+  padding: 32px;
+  flex: 1;
+}
+
+@media (max-width: 640px) {
+  .vol-content {
+    padding: 16px;
+  }
+}
+
+/* ── Volunteer Sidebar ── */
+.vol-sidebar {
+  width: 260px;
+  background-color: var(--vol-sidebar-bg);
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.vs-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px 28px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vs-brand-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--vol-primary), var(--vol-secondary));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+}
+
+.vs-brand-text {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+}
+
+.vs-brand-sub {
+  font-size: 11px;
+  color: var(--vol-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.vs-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 24px;
+  flex: 1;
+}
+
+.vs-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: var(--vol-sidebar-text);
+  font-size: 14px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.vs-nav-item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
+}
+
+.vs-nav-item.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--vol-primary), var(--vol-primary-dark));
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35);
+}
+
+.vs-nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.vs-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vs-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* ── Volunteer Navbar ── */
+.vol-navbar {
+  height: 72px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--vol-border);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+}
+
+.vn-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vn-page-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--vol-text-main);
+}
+
+.vn-role-badge {
+  background: #e0e7ff;
+  color: var(--vol-primary-dark);
+  border: 1px solid #c7d2fe;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vn-avatar-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--vol-primary), var(--vol-secondary));
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vn-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  width: 220px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  border: 1px solid var(--vol-border);
+  padding: 8px;
+  z-index: 1000;
+}
+
+/* ── Cards & Tables ── */
+.vol-card {
+  background: var(--vol-card-bg);
+  border-radius: var(--vol-radius);
+  padding: 24px;
+  border: 1px solid var(--vol-border);
+  box-shadow: var(--vol-shadow);
+}
+
+.vol-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.vol-stat-card {
+  background: var(--vol-card-bg);
+  border-radius: var(--vol-radius);
+  padding: 22px;
+  border: 1px solid var(--vol-border);
+  box-shadow: var(--vol-shadow);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vol-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--vol-shadow-hover);
+}
+
+.vol-stat-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.vol-stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--vol-text-main);
+  line-height: 1;
+}
+
+.vol-stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vol-text-sub);
+  margin-top: 4px;
+}
+
+/* ── Buttons ── */
+.vol-btn-primary {
+  background: linear-gradient(135deg, var(--vol-primary), var(--vol-primary-dark));
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.vol-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.vol-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vol-btn-secondary {
+  background: #f1f5f9;
+  color: var(--vol-text-main);
+  border: 1px solid var(--vol-border);
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vol-btn-secondary:hover {
+  background: #e2e8f0;
+}

@@ -6,6 +6,8 @@ import CreateDonation from "./CreateDonation";
 import MyDonations from "./MyDonations";
 import TrackDonation from "./TrackDonation";
 import DonorProfile from "./DonorProfile";
+import BrowseRequirements from "./BrowseRequirements";
+import DonorDonateRequirement from "./DonorDonateRequirement";
 import "./donor.css";
 
 export default function DonorDashboard() {
@@ -66,6 +68,28 @@ export default function DonorDashboard() {
                 <DonorNavbar pageTitle="My Profile" />
                 <div className="donor-content">
                   <DonorProfile />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="browse-requirements"
+            element={
+              <>
+                <DonorNavbar pageTitle="Browse Requirements" />
+                <div className="donor-content">
+                  <BrowseRequirements />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="donate/:requirementId"
+            element={
+              <>
+                <DonorNavbar pageTitle="Donate To Requirement" />
+                <div className="donor-content">
+                  <DonorDonateRequirement />
                 </div>
               </>
             }

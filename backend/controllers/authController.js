@@ -88,6 +88,7 @@ exports.signup = async (req, res) => {
         latitude,
         longitude,
         verificationDocs: verificationDocPath ? [verificationDocPath] : [],
+        verificationStatus: "verified",
       });
     }
 
@@ -292,7 +293,7 @@ exports.googleSignIn = async (req, res) => {
           address: address || "Google Sign-In Account",
           latitude: latitude || null,
           longitude: longitude || null,
-          verificationStatus: "pending",
+          verificationStatus: "verified",
         });
       }
     }
