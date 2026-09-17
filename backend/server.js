@@ -5,13 +5,15 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 
 // ── Routes ──
-const authRoutes         = require("./routes/authRoutes");
-const adminRoutes        = require("./routes/adminRoutes");
-const userRoutes         = require("./routes/userRoutes");
-const requirementRoutes  = require("./routes/requirementRoutes");
-const donationRoutes     = require("./routes/donationRoutes");
-const deliveryRoutes     = require("./routes/deliveryRoutes");
+const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const userRoutes = require("./routes/userRoutes");
+const requirementRoutes = require("./routes/requirementRoutes");
+const donationRoutes = require("./routes/donationRoutes");
+const deliveryRoutes = require("./routes/deliveryRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const campaignRoutes = require("./routes/campaignRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 
 dotenv.config();
 connectDB();
@@ -22,13 +24,16 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // ── API Endpoints ──
-app.use("/api/auth",          authRoutes);
-app.use("/api/admin",         adminRoutes);
-app.use("/api/user",          userRoutes);
-app.use("/api/requirements",  requirementRoutes);
-app.use("/api/donations",     donationRoutes);
-app.use("/api/deliveries",    deliveryRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/requirements", requirementRoutes);
+app.use("/api/donations", donationRoutes);
+app.use("/api/deliveries", deliveryRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/campaigns", campaignRoutes);
+app.use("/api/chat", chatRoutes);
+
 
 // ── Static Files ──
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

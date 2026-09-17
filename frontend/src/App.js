@@ -20,6 +20,7 @@ import Donors from "./pages/admin/donors";
 import Donations from "./pages/admin/Donations";
 import Deliveries from "./pages/admin/Deliveries";
 import Campaigns from "./pages/admin/Campaigns";
+import Requirements from "./pages/admin/Requirements";
 import Analytics from "./pages/admin/Analytics";
 import Settings from "./pages/admin/Settings";
 
@@ -99,6 +100,7 @@ function App() {
           <Route path="donors" element={<Donors />} />
           <Route path="donations" element={<Donations />} />
           <Route path="deliveries" element={<Deliveries />} />
+          <Route path="requirements" element={<Requirements />} />
           <Route path="campaigns" element={<Campaigns />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />

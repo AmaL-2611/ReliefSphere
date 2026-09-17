@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import ChatModal from "../../components/chat/ChatModal";
 
 export default function AssignedDeliveries() {
   const [deliveries, setDeliveries] = useState([]);
@@ -8,6 +9,41 @@ export default function AssignedDeliveries() {
   const [actionId, setActionId] = useState(null);
   const [proofNote, setProofNote] = useState("");
   const [proofFile, setProofFile] = useState(null);
+
+  // Chat modal state
+  const [chatConfig, setChatConfig] = useState({
+    isOpen: false,
+    conversationId: "",
+    recipientId: "",
+    recipientName: "",
+    recipientRole: "",
+    title: "",
+  });
+
+  const openChat = (del, targetType) => {
+    const isDonor = targetType === "donor";
+    const donorUser = del.donationId?.postedBy;
+    const orgUser = del.donationId?.matchedOrganization;
+
+    const recipientId = isDonor
+      ? donorUser?._id || donorUser
+      : orgUser?.userId || orgUser?._id;
+
+    const recipientName = isDonor
+      ? donorUser?.fullName || "Donor"
+      : orgUser?.orgName || "Organization";
+
+    const recipientRole = isDonor ? "Donor" : "Organization";
+
+    setChatConfig({
+      isOpen: true,
+      conversationId: `conv_donation_${del.donationId?._id || del._id}_${targetType}`,
+      recipientId,
+      recipientName,
+      recipientRole,
+      title: `Logistics Chat - ${del.donationId?.donationName || "Relief Supply"}`,
+    });
+  };
 
   const fetchDeliveries = async () => {
     setLoading(true);
@@ -131,25 +167,43 @@ export default function AssignedDeliveries() {
                   </span>
                 </div>
 
-                {/* Addresses */}
+                {/* Addresses & Details */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, background: "#f8fafc", padding: 16, borderRadius: 12, marginBottom: 20 }}>
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>📍 Pickup Location</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", marginTop: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 6 }}>📍 Pickup Location & Donor Details</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
                       {del.pickupAddress}
                     </div>
-                    <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                      Donor: {del.donationId?.postedBy?.fullName || "Donor"} ({del.donationId?.postedBy?.email})
+                    <div style={{ marginTop: 8, padding: 10, background: "#ffffff", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: 6 }}>
+                        👤 Donor: {del.donationId?.postedBy?.fullName || "Donor"}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#475569", marginTop: 4, display: "flex", flexDirection: "column", gap: 3 }}>
+                        <div>📧 <strong>Email:</strong> {del.donationId?.postedBy?.email || "N/A"}</div>
+                        <div>📞 <strong>Phone:</strong> {del.donationId?.contactNumber || del.donationId?.postedBy?.phone || "Not provided"}</div>
+                        {del.donationId?.quantity && (
+                          <div style={{ fontWeight: 700, color: "#0891b2", marginTop: 2 }}>
+                            📦 <strong>Pledged:</strong> {del.donationId?.quantity} {del.donationId?.unit || "Units"} ({del.donationId?.category})
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>🏢 Drop Location (NGO)</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", marginTop: 4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 6 }}>🏢 Drop Location & Organization</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
                       {del.dropAddress || del.donationId?.matchedOrganization?.address || "NGO Destination"}
                     </div>
-                    <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                      Org: {del.donationId?.matchedOrganization?.orgName || "Recipient NGO"}
+                    <div style={{ marginTop: 8, padding: 10, background: "#ffffff", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: 6 }}>
+                        🏛️ Org: {del.donationId?.matchedOrganization?.orgName || "Recipient Organization"}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#475569", marginTop: 4, display: "flex", flexDirection: "column", gap: 3 }}>
+                        {del.donationId?.matchedOrganization?.orgType && (
+                          <div>🏷️ <strong>Type:</strong> <span style={{ textTransform: "capitalize" }}>{del.donationId?.matchedOrganization?.orgType?.replace(/_/g, " ")}</span></div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -177,8 +231,44 @@ export default function AssignedDeliveries() {
                   </div>
                 )}
 
-                {/* Actions */}
-                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+                {/* Actions & Chat Buttons */}
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                  <button
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                      border: "1px solid #cbd5e1",
+                      background: "#ffffff",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                    onClick={() => openChat(del, "donor")}
+                  >
+                    💬 Chat Donor
+                  </button>
+
+                  <button
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 8,
+                      border: "1px solid #cbd5e1",
+                      background: "#ffffff",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                    onClick={() => openChat(del, "org")}
+                  >
+                    🏢 Chat Organization
+                  </button>
+
                   {isAssigned && (
                     <button
                       className="vol-btn-primary"
@@ -207,6 +297,18 @@ export default function AssignedDeliveries() {
           })}
         </div>
       )}
+
+      {/* Chat Modal */}
+      <ChatModal
+        isOpen={chatConfig.isOpen}
+        onClose={() => setChatConfig((prev) => ({ ...prev, isOpen: false }))}
+        conversationId={chatConfig.conversationId}
+        recipientId={chatConfig.recipientId}
+        recipientName={chatConfig.recipientName}
+        recipientRole={chatConfig.recipientRole}
+        title={chatConfig.title}
+      />
     </>
   );
 }
+

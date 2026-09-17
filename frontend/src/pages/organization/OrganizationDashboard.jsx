@@ -6,6 +6,8 @@ import CreateRequirement from "./CreateRequirement";
 import MyRequirements from "./MyRequirements";
 import IncomingDonations from "./IncomingDonations";
 import OrganizationProfile from "./OrganizationProfile";
+import CreateCampaign from "./CreateCampaign";
+import MyCampaigns from "./MyCampaigns";
 import "./organization.css";
 
 export default function OrganizationDashboard() {
@@ -65,6 +67,28 @@ export default function OrganizationDashboard() {
                 <OrgNavbar pageTitle="Incoming Donations" />
                 <div className="org-content">
                   <IncomingDonations />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="create-campaign"
+            element={
+              <>
+                <OrgNavbar pageTitle="Create Campaign" />
+                <div className="org-content">
+                  <CreateCampaign />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="my-campaigns"
+            element={
+              <>
+                <OrgNavbar pageTitle="My Campaigns" />
+                <div className="org-content">
+                  <MyCampaigns />
                 </div>
               </>
             }

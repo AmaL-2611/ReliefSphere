@@ -77,6 +77,16 @@ const donationSchema = new mongoose.Schema(
       ],
       default: "pending",
     },
+    campaignId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Campaign",
+      default: null,
+    },
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RecipientOrganization",
+      default: null,
+    },
     matchedRequirement: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Requirement",

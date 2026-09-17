@@ -2,6 +2,8 @@ const Delivery = require("../models/deliveryModel");
 const Donation = require("../models/donationModel");
 const Volunteer = require("../models/volunteerModel");
 const Requirement = require("../models/requirementModel");
+const Campaign = require("../models/campaignModel");
+const RecipientOrganization = require("../models/RecipientOrganization");
 const User = require("../models/userModel");
 const { createNotification } = require("../utils/aiMatcher");
 
@@ -15,8 +17,8 @@ exports.assignVolunteer = async (req, res) => {
       .populate("matchedOrganization", "address");
 
     if (!donation) return res.status(404).json({ message: "Donation not found." });
-    if (!["accepted", "matched"].includes(donation.status)) {
-      return res.status(400).json({ message: "Donation must be accepted before assigning a volunteer." });
+    if (!["pending", "accepted", "matched"].includes(donation.status)) {
+      return res.status(400).json({ message: "Donation is not available for volunteer assignment." });
     }
 
     const volunteer = await Volunteer.findById(volunteerId);
@@ -74,9 +76,9 @@ exports.getMyDeliveries = async (req, res) => {
       .populate({
         path: "donationId",
         populate: [
-          { path: "postedBy", select: "fullName email" },
-          { path: "matchedOrganization", select: "orgName address" },
-          { path: "matchedRequirement", select: "title category" },
+          { path: "postedBy", select: "_id fullName email phone" },
+          { path: "matchedOrganization", select: "_id userId orgName address orgType" },
+          { path: "matchedRequirement", select: "_id title category" },
         ],
       })
       .sort({ createdAt: -1 });
@@ -155,26 +157,62 @@ exports.markDelivered = async (req, res) => {
 
     const donation = delivery.donationId;
 
-    // Update donation and requirement statuses
+    // Update donation status
     await Donation.findByIdAndUpdate(donation._id, {
       status: "delivered",
       deliveredAt: new Date(),
     });
 
+    // Update Campaign raised quantity ONLY on delivery
+    if (donation.campaignId) {
+      const campaign = await Campaign.findById(donation.campaignId);
+      if (campaign) {
+        campaign.raisedQuantity = (campaign.raisedQuantity || 0) + (donation.quantity || 1);
+        if (campaign.targetQuantity > 0 && campaign.raisedQuantity >= campaign.targetQuantity) {
+          campaign.status = "COMPLETED";
+        }
+        await campaign.save();
+      }
+    }
+
+    // Update Requirement received quantity ONLY on delivery
     if (donation.matchedRequirement) {
-      await Requirement.findByIdAndUpdate(donation.matchedRequirement, { status: "fulfilled" });
+      const reqDoc = await Requirement.findById(donation.matchedRequirement);
+      if (reqDoc) {
+        reqDoc.receivedQuantity = (reqDoc.receivedQuantity || 0) + (donation.quantity || 1);
+        if (reqDoc.receivedQuantity >= reqDoc.quantity) {
+          reqDoc.status = "fulfilled";
+        }
+        await reqDoc.save();
+      }
     }
 
     // Increment volunteer completed deliveries
     volunteer.completedDeliveries = (volunteer.completedDeliveries || 0) + 1;
     await volunteer.save();
 
+    // Notify Community Shelter / Organization
+    const targetOrgId = donation.organizationId || donation.matchedOrganization;
+    if (targetOrgId) {
+      const org = await RecipientOrganization.findById(targetOrgId);
+      if (org && org.userId) {
+        await createNotification(
+          org.userId,
+          "📦 Relief Items Delivered to Shelter!",
+          `Volunteer has delivered ${donation.quantity} ${donation.unit || "units"} of "${donation.donationName}".`,
+          "donation",
+          donation._id,
+          "Donation"
+        );
+      }
+    }
+
     // Notify donor
     if (donation.postedBy?._id) {
       await createNotification(
         donation.postedBy._id,
         "🎉 Donation Delivered!",
-        `Your donation "${donation.donationName}" has been successfully delivered!`,
+        `Your donation "${donation.donationName}" has been successfully delivered to the shelter!`,
         "donation",
         donation._id,
         "Donation"

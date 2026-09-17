@@ -15,7 +15,7 @@ const recipientOrganizationSchema = new mongoose.Schema(
 
     orgType: {
       type: String,
-      enum: ["ngo", "orphanage", "old_age_home", "government_school"],
+      enum: ["ngo", "orphanage", "old_age_home", "government_school", "community_shelter"],
       required: true,
     },
 

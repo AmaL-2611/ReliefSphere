@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import ChatModal from "../../components/chat/ChatModal";
 
 const STATUS_BADGES = {
   pending: { label: "⏳ Pending Approval", bg: "#fef3c7", color: "#92400e" },
   matched: { label: "🎯 AI Matched", bg: "#e0f2fe", color: "#0369a1" },
-  accepted: { label: "🟢 Accepted", bg: "#dcfce7", color: "#15803d" },
+  accepted: { label: "🟢 Accepted (Awaiting Volunteer)", bg: "#dcfce7", color: "#15803d" },
   rejected: { label: "❌ Rejected", bg: "#fee2e2", color: "#991b1b" },
-  assigned: { label: "🚚 Assigned to Volunteer", bg: "#fef9c3", color: "#a16207" },
+  assigned: { label: "🚚 Volunteer Assigned", bg: "#fef9c3", color: "#a16207" },
   picked_up: { label: "📦 Picked Up", bg: "#e0e7ff", color: "#3730a3" },
   delivered: { label: "✅ Delivered", bg: "#d1fae5", color: "#047857" },
 };
@@ -19,6 +20,16 @@ export default function IncomingDonations() {
   const [rejectingDonation, setRejectingDonation] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Chat modal state
+  const [chatConfig, setChatConfig] = useState({
+    isOpen: false,
+    conversationId: "",
+    recipientId: "",
+    recipientName: "",
+    recipientRole: "",
+    title: "",
+  });
 
   const fetchIncomingDonations = async () => {
     setLoading(true);
@@ -85,7 +96,7 @@ export default function IncomingDonations() {
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1e293b" }}>Incoming Relief Donations</h1>
           <p style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>
-            Review, view donor details, accept pledges, or decline incoming donation requests for your requirements.
+            Track donor pledges and real-time delivery status for your requirements. Pledges are assigned to volunteers by Admin for pickup and delivery.
           </p>
         </div>
       </div>
@@ -167,6 +178,32 @@ export default function IncomingDonations() {
                             }}
                           >
                             👁 View
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              const donorUser = don.postedBy;
+                              setChatConfig({
+                                isOpen: true,
+                                conversationId: `conv_donation_${don._id}_donor`,
+                                recipientId: donorUser?._id || donorUser,
+                                recipientName: donorUser?.fullName || "Donor",
+                                recipientRole: "Donor",
+                                title: `Donation Chat - ${don.matchedRequirement?.title || don.donationName}`,
+                              });
+                            }}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: 8,
+                              border: "1px solid #0891b2",
+                              background: "#ecfeff",
+                              color: "#0891b2",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            💬 Chat Donor
                           </button>
 
                           {(don.status === "pending" || don.status === "matched") && (
@@ -371,6 +408,17 @@ export default function IncomingDonations() {
           </div>
         </div>
       )}
+
+      {/* Chat Modal */}
+      <ChatModal
+        isOpen={chatConfig.isOpen}
+        onClose={() => setChatConfig((prev) => ({ ...prev, isOpen: false }))}
+        conversationId={chatConfig.conversationId}
+        recipientId={chatConfig.recipientId}
+        recipientName={chatConfig.recipientName}
+        recipientRole={chatConfig.recipientRole}
+        title={chatConfig.title}
+      />
     </>
   );
 }

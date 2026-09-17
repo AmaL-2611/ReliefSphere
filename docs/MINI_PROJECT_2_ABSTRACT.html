@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ABSTRACT - ReliefSphere</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 20mm 18mm 20mm;
+    }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 11.5pt;
+      line-height: 1.35;
+      color: #000;
+      background: #fff;
+      margin: 0;
+      padding: 0;
+      text-align: justify;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .title-main {
+      font-size: 17pt;
+      font-weight: bold;
+      text-decoration: underline;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .title-sub {
+      font-size: 12.5pt;
+      font-weight: bold;
+      text-decoration: underline;
+      margin-bottom: 16px;
+      line-height: 1.25;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 11px;
+      text-indent: 0px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title-main">ABSTRACT</div>
+    <div class="title-sub">ReliefSphere : An Intelligent Community Resource Redistribution and Decision Support Platform</div>
+  </div>
+
+  <p>
+    Resource scarcity and unequal distribution remain significant challenges despite the availability of 
+    surplus resources within communities. Restaurants, hotels, educational institutions, companies, and 
+    individuals frequently possess reusable resources such as food, clothes, medicine, and books, while NGOs, 
+    orphanages, old-age homes, shelters, and government schools often face shortages. Existing donation 
+    platforms primarily facilitate communication between donors and recipients but offer limited support 
+    in identifying the most appropriate beneficiary organization based on real-time need.
+  </p>
+
+  <p>
+    ReliefSphere AI is a web-based community resource redistribution platform that addresses this gap 
+    through an AI-powered Multi-Criteria Decision Support System. The platform enables verified donors 
+    to contribute surplus food, clothes, medicine, and books, while verified recipient organizations receive 
+    donations or raise resource requests. Dedicated modules for donors, recipient organizations, 
+    volunteers, and administrators streamline the complete donation lifecycle — registration, verification, 
+    resource management, volunteer coordination, delivery tracking, and administrative monitoring.
+  </p>
+
+  <p>
+    The recommendation engine analyzes multiple decision factors — resource category, urgency, 
+    geographical proximity (via Haversine formula), and organizational capacity — to rank and recommend the most suitable recipient 
+    organizations for each donation. The platform further incorporates a Priority Campaign Management 
+    System that allows administrators to launch time-bound campaigns for disaster relief, educational drives, 
+    seasonal clothing collections, and other community initiatives; during an active campaign, the AI 
+    dynamically reprioritizes affected organizations to accelerate resource allocation in critical situations.
+  </p>
+
+  <p>
+    The mini project implements a fully functional web resource redistribution platform integrated with a 
+    rule-based, multi-criteria AI recommendation module built natively in Node.js. The main project extends this foundation 
+    along two directions: first, by deepening the recommendation engine with Explainable AI, Python-based predictive 
+    demand analytics (Scikit-learn), trust scoring, and an adaptive weighting mechanism that learns from accepted and 
+    rejected recommendations; and second, by extending platform access to a mobile application for the 
+    Donor, Recipient Organization, and Volunteer roles, enabling field-level participation beyond the web 
+    interface.
+  </p>
+
+  <p>
+    The system is built using React.js for the frontend, Node.js with Express.js for the backend, 
+    MongoDB as the NoSQL document database, with JWT-based authentication and Leaflet/OpenStreetMap for geolocation. 
+    The use of JavaScript across both frontend and backend simplifies development and maintenance by unifying the 
+    technology stack. The primary research contribution of the project is the development and 
+    evaluation of an AI-based Multi-Criteria Decision Support Framework for community resource 
+    redistribution — one that improves transparency, efficiency, and responsiveness in humanitarian 
+    resource management, while remaining scalable enough for real-world deployment beyond the 
+    academic scope.
+  </p>
+</body>
+</html>

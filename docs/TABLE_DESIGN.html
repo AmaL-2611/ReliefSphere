@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Table Design - ReliefSphere</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 15mm 18mm 15mm 18mm;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.35;
+      color: #000;
+      background: #fff;
+      margin: 0;
+      padding: 10px;
+    }
+    h1 {
+      font-size: 20pt;
+      font-weight: bold;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    h2 {
+      font-size: 13pt;
+      font-weight: bold;
+      margin-top: 25px;
+      margin-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 25px;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 6px 10px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      font-weight: bold;
+      background-color: #f8f9fa;
+    }
+    .col-sl { width: 8%; text-align: center; }
+    .col-field { width: 24%; font-family: 'Courier New', Courier, monospace; font-weight: bold; }
+    .col-type { width: 18%; }
+    .col-desc { width: 50%; }
+  </style>
+</head>
+<body>
+
+  <h1>Table Design</h1>
+
+  <h2>1. User Collection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-sl">Sl. No.</th>
+        <th class="col-field">Field Name</th>
+        <th class="col-type">Data Type</th>
+        <th class="col-desc">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-sl">1</td><td class="col-field">_id</td><td class="col-type">ObjectId</td><td class="col-desc">Unique User ID</td></tr>
+      <tr><td class="col-sl">2</td><td class="col-field">fullName</td><td class="col-type">String</td><td class="col-desc">Full Name</td></tr>
+      <tr><td class="col-sl">3</td><td class="col-field">email</td><td class="col-type">String</td><td class="col-desc">Email Address</td></tr>
+      <tr><td class="col-sl">4</td><td class="col-field">password</td><td class="col-type">String</td><td class="col-desc">Encrypted Password</td></tr>
+      <tr><td class="col-sl">5</td><td class="col-field">phone</td><td class="col-type">String</td><td class="col-desc">Contact Number</td></tr>
+      <tr><td class="col-sl">6</td><td class="col-field">role</td><td class="col-type">String</td><td class="col-desc">Donor / Recipient Org / Volunteer / Admin</td></tr>
+      <tr><td class="col-sl">7</td><td class="col-field">isVerified</td><td class="col-type">Boolean</td><td class="col-desc">Verification State</td></tr>
+      <tr><td class="col-sl">8</td><td class="col-field">avatar</td><td class="col-type">String</td><td class="col-desc">Profile Image Path</td></tr>
+      <tr><td class="col-sl">9</td><td class="col-field">resetPasswordToken</td><td class="col-type">String</td><td class="col-desc">Password Reset Token</td></tr>
+      <tr><td class="col-sl">10</td><td class="col-field">resetPasswordExpires</td><td class="col-type">Date</td><td class="col-desc">Reset Token Expiry Date</td></tr>
+      <tr><td class="col-sl">11</td><td class="col-field">createdAt</td><td class="col-type">Date</td><td class="col-desc">Registration Date</td></tr>
+      <tr><td class="col-sl">12</td><td class="col-field">updatedAt</td><td class="col-type">Date</td><td class="col-desc">Last Update Date</td></tr>
+    </tbody>
+  </table>
+
+  <h2>2. Donor Profile Collection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-sl">Sl. No.</th>
+        <th class="col-field">Field Name</th>
+        <th class="col-type">Data Type</th>
+        <th class="col-desc">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-sl">1</td><td class="col-field">_id</td><td class="col-type">ObjectId</td><td class="col-desc">Unique Donor ID</td></tr>
+      <tr><td class="col-sl">2</td><td class="col-field">userId</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to User</td></tr>
+      <tr><td class="col-sl">3</td><td class="col-field">donorType</td><td class="col-type">String</td><td class="col-desc">Individual / Small Business / Educational Institution</td></tr>
+      <tr><td class="col-sl">4</td><td class="col-field">preferredCategories</td><td class="col-type">Array</td><td class="col-desc">Preferred Donation Categories</td></tr>
+      <tr><td class="col-sl">5</td><td class="col-field">address</td><td class="col-type">String</td><td class="col-desc">Physical Address</td></tr>
+      <tr><td class="col-sl">6</td><td class="col-field">latitude</td><td class="col-type">Number</td><td class="col-desc">Geolocation Latitude</td></tr>
+      <tr><td class="col-sl">7</td><td class="col-field">longitude</td><td class="col-type">Number</td><td class="col-desc">Geolocation Longitude</td></tr>
+      <tr><td class="col-sl">8</td><td class="col-field">totalDonations</td><td class="col-type">Number</td><td class="col-desc">Count of Total Donations</td></tr>
+      <tr><td class="col-sl">9</td><td class="col-field">createdAt</td><td class="col-type">Date</td><td class="col-desc">Creation Date</td></tr>
+      <tr><td class="col-sl">10</td><td class="col-field">updatedAt</td><td class="col-type">Date</td><td class="col-desc">Last Update Date</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Recipient Organization Collection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-sl">Sl. No.</th>
+        <th class="col-field">Field Name</th>
+        <th class="col-type">Data Type</th>
+        <th class="col-desc">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-sl">1</td><td class="col-field">_id</td><td class="col-type">ObjectId</td><td class="col-desc">Unique Organization ID</td></tr>
+      <tr><td class="col-sl">2</td><td class="col-field">userId</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to User</td></tr>
+      <tr><td class="col-sl">3</td><td class="col-field">orgName</td><td class="col-type">String</td><td class="col-desc">Organization Name</td></tr>
+      <tr><td class="col-sl">4</td><td class="col-field">orgType</td><td class="col-type">String</td><td class="col-desc">NGO / Orphanage / Old Age Home / Government School</td></tr>
+      <tr><td class="col-sl">5</td><td class="col-field">registrationNumber</td><td class="col-type">String</td><td class="col-desc">Registration Number</td></tr>
+      <tr><td class="col-sl">6</td><td class="col-field">address</td><td class="col-type">String</td><td class="col-desc">Physical Address</td></tr>
+      <tr><td class="col-sl">7</td><td class="col-field">verificationDocs</td><td class="col-type">Array</td><td class="col-desc">Uploaded Verification Documents</td></tr>
+      <tr><td class="col-sl">8</td><td class="col-field">latitude</td><td class="col-type">Number</td><td class="col-desc">Geolocation Latitude</td></tr>
+      <tr><td class="col-sl">9</td><td class="col-field">longitude</td><td class="col-type">Number</td><td class="col-desc">Geolocation Longitude</td></tr>
+      <tr><td class="col-sl">10</td><td class="col-field">verificationStatus</td><td class="col-type">String</td><td class="col-desc">Pending / Verified / Rejected</td></tr>
+      <tr><td class="col-sl">11</td><td class="col-field">approvedBy</td><td class="col-type">ObjectId</td><td class="col-desc">Approved by Admin ID</td></tr>
+      <tr><td class="col-sl">12</td><td class="col-field">approvedAt</td><td class="col-type">Date</td><td class="col-desc">Approval Date</td></tr>
+      <tr><td class="col-sl">13</td><td class="col-field">rejectionReason</td><td class="col-type">String</td><td class="col-desc">Rejection Remarks</td></tr>
+      <tr><td class="col-sl">14</td><td class="col-field">createdAt</td><td class="col-type">Date</td><td class="col-desc">Registration Date</td></tr>
+      <tr><td class="col-sl">15</td><td class="col-field">updatedAt</td><td class="col-type">Date</td><td class="col-desc">Last Update Date</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Volunteer Profile Collection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-sl">Sl. No.</th>
+        <th class="col-field">Field Name</th>
+        <th class="col-type">Data Type</th>
+        <th class="col-desc">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-sl">1</td><td class="col-field">_id</td><td class="col-type">ObjectId</td><td class="col-desc">Unique Volunteer ID</td></tr>
+      <tr><td class="col-sl">2</td><td class="col-field">userId</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to User</td></tr>
+      <tr><td class="col-sl">3</td><td class="col-field">dob</td><td class="col-type">Date</td><td class="col-desc">Date of Birth</td></tr>
+      <tr><td class="col-sl">4</td><td class="col-field">phone</td><td class="col-type">String</td><td class="col-desc">Contact Number</td></tr>
+      <tr><td class="col-sl">5</td><td class="col-field">address</td><td class="col-type">String</td><td class="col-desc">Residential Address</td></tr>
+      <tr><td class="col-sl">6</td><td class="col-field">skills</td><td class="col-type">Array</td><td class="col-desc">Driving / Logistics & Delivery / First Aid / etc.</td></tr>
+      <tr><td class="col-sl">7</td><td class="col-field">latitude</td><td class="col-type">Number</td><td class="col-desc">Geolocation Latitude</td></tr>
+      <tr><td class="col-sl">8</td><td class="col-field">longitude</td><td class="col-type">Number</td><td class="col-desc">Geolocation Longitude</td></tr>
+      <tr><td class="col-sl">9</td><td class="col-field">completedDeliveries</td><td class="col-type">Number</td><td class="col-desc">Completed Delivery Count</td></tr>
+      <tr><td class="col-sl">10</td><td class="col-field">idDocument</td><td class="col-type">String</td><td class="col-desc">Government ID Document Path</td></tr>
+      <tr><td class="col-sl">11</td><td class="col-field">verificationStatus</td><td class="col-type">String</td><td class="col-desc">Pending / Verified / Rejected</td></tr>
+      <tr><td class="col-sl">12</td><td class="col-field">approvedBy</td><td class="col-type">ObjectId</td><td class="col-desc">Approved by Admin ID</td></tr>
+      <tr><td class="col-sl">13</td><td class="col-field">approvedAt</td><td class="col-type">Date</td><td class="col-desc">Approval Date</td></tr>
+      <tr><td class="col-sl">14</td><td class="col-field">rejectionReason</td><td class="col-type">String</td><td class="col-desc">Rejection Remarks</td></tr>
+      <tr><td class="col-sl">15</td><td class="col-field">createdAt</td><td class="col-type">Date</td><td class="col-desc">Registration Date</td></tr>
+      <tr><td class="col-sl">16</td><td class="col-field">updatedAt</td><td class="col-type">Date</td><td class="col-desc">Last Update Date</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. Resource Donation Collection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-sl">Sl. No.</th>
+        <th class="col-field">Field Name</th>
+        <th class="col-type">Data Type</th>
+        <th class="col-desc">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-sl">1</td><td class="col-field">_id</td><td class="col-type">ObjectId</td><td class="col-desc">Unique Donation ID</td></tr>
+      <tr><td class="col-sl">2</td><td class="col-field">donorId</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to Donor</td></tr>
+      <tr><td class="col-sl">3</td><td class="col-field">postedBy</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to User</td></tr>
+      <tr><td class="col-sl">4</td><td class="col-field">category</td><td class="col-type">String</td><td class="col-desc">Food / Clothes / Books / Medicine / Essentials</td></tr>
+      <tr><td class="col-sl">5</td><td class="col-field">donationName</td><td class="col-type">String</td><td class="col-desc">Donation Name / Item Title</td></tr>
+      <tr><td class="col-sl">6</td><td class="col-field">quantity</td><td class="col-type">Number</td><td class="col-desc">Quantity Donated</td></tr>
+      <tr><td class="col-sl">7</td><td class="col-field">unit</td><td class="col-type">String</td><td class="col-desc">Unit (Packets / Kg / Items)</td></tr>
+      <tr><td class="col-sl">8</td><td class="col-field">description</td><td class="col-type">String</td><td class="col-desc">Donation Item Description</td></tr>
+      <tr><td class="col-sl">9</td><td class="col-field">pickupAddress</td><td class="col-type">String</td><td class="col-desc">Pickup Address</td></tr>
+      <tr><td class="col-sl">10</td><td class="col-field">latitude</td><td class="col-type">Number</td><td class="col-desc">Pickup Latitude</td></tr>
+      <tr><td class="col-sl">11</td><td class="col-field">longitude</td><td class="col-type">Number</td><td class="col-desc">Pickup Longitude</td></tr>
+      <tr><td class="col-sl">12</td><td class="col-field">image</td><td class="col-type">String</td><td class="col-desc">Item Image Path</td></tr>
+      <tr><td class="col-sl">13</td><td class="col-field">contactNumber</td><td class="col-type">String</td><td class="col-desc">Donor Contact Phone</td></tr>
+      <tr><td class="col-sl">14</td><td class="col-field">notes</td><td class="col-type">String</td><td class="col-desc">Special Instructions</td></tr>
+      <tr><td class="col-sl">15</td><td class="col-field">status</td><td class="col-type">String</td><td class="col-desc">Pending / Matched / Accepted / Assigned / Delivered</td></tr>
+      <tr><td class="col-sl">16</td><td class="col-field">matchedRequirement</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to Requirement</td></tr>
+      <tr><td class="col-sl">17</td><td class="col-field">matchedOrganization</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to Organization</td></tr>
+      <tr><td class="col-sl">18</td><td class="col-field">matchScore</td><td class="col-type">Number</td><td class="col-desc">AI Match Score (0–100)</td></tr>
+      <tr><td class="col-sl">19</td><td class="col-field">acceptedAt</td><td class="col-type">Date</td><td class="col-desc">Acceptance Date</td></tr>
+      <tr><td class="col-sl">20</td><td class="col-field">deliveredAt</td><td class="col-type">Date</td><td class="col-desc">Delivery Completion Date</td></tr>
+      <tr><td class="col-sl">21</td><td class="col-field">createdAt</td><td class="col-type">Date</td><td class="col-desc">Posting Date</td></tr>
+      <tr><td class="col-sl">22</td><td class="col-field">updatedAt</td><td class="col-type">Date</td><td class="col-desc">Last Update Date</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. Resource Requirement Collection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-sl">Sl. No.</th>
+        <th class="col-field">Field Name</th>
+        <th class="col-type">Data Type</th>
+        <th class="col-desc">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-sl">1</td><td class="col-field">_id</td><td class="col-type">ObjectId</td><td class="col-desc">Unique Requirement ID</td></tr>
+      <tr><td class="col-sl">2</td><td class="col-field">organizationId</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to Organization</td></tr>
+      <tr><td class="col-sl">3</td><td class="col-field">postedBy</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to User</td></tr>
+      <tr><td class="col-sl">4</td><td class="col-field">category</td><td class="col-type">String</td><td class="col-desc">Food / Clothes / Books / Medicine / Essentials</td></tr>
+      <tr><td class="col-sl">5</td><td class="col-field">title</td><td class="col-type">String</td><td class="col-desc">Requirement Title</td></tr>
+      <tr><td class="col-sl">6</td><td class="col-field">description</td><td class="col-type">String</td><td class="col-desc">Requirement Description</td></tr>
+      <tr><td class="col-sl">7</td><td class="col-field">quantity</td><td class="col-type">Number</td><td class="col-desc">Quantity Needed</td></tr>
+      <tr><td class="col-sl">8</td><td class="col-field">unit</td><td class="col-type">String</td><td class="col-desc">Unit (Items / Packets / Kg)</td></tr>
+      <tr><td class="col-sl">9</td><td class="col-field">urgency</td><td class="col-type">String</td><td class="col-desc">Low / Medium / High / Critical</td></tr>
+      <tr><td class="col-sl">10</td><td class="col-field">location</td><td class="col-type">String</td><td class="col-desc">Delivery Address</td></tr>
+      <tr><td class="col-sl">11</td><td class="col-field">latitude</td><td class="col-type">Number</td><td class="col-desc">Geolocation Latitude</td></tr>
+      <tr><td class="col-sl">12</td><td class="col-field">longitude</td><td class="col-type">Number</td><td class="col-desc">Geolocation Longitude</td></tr>
+      <tr><td class="col-sl">13</td><td class="col-field">beneficiaryType</td><td class="col-type">String</td><td class="col-desc">Target Beneficiaries</td></tr>
+      <tr><td class="col-sl">14</td><td class="col-field">beneficiaryCount</td><td class="col-type">Number</td><td class="col-desc">Beneficiary Count</td></tr>
+      <tr><td class="col-sl">15</td><td class="col-field">requiredBefore</td><td class="col-type">Date</td><td class="col-desc">Required Deadline</td></tr>
+      <tr><td class="col-sl">16</td><td class="col-field">imageUrl</td><td class="col-type">String</td><td class="col-desc">Reference Image Path</td></tr>
+      <tr><td class="col-sl">17</td><td class="col-field">status</td><td class="col-type">String</td><td class="col-desc">Pending / Open / Matched / Fulfilled / Closed</td></tr>
+      <tr><td class="col-sl">18</td><td class="col-field">matchedDonation</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to Donation</td></tr>
+      <tr><td class="col-sl">19</td><td class="col-field">expiresAt</td><td class="col-type">Date</td><td class="col-desc">Expiration Date</td></tr>
+      <tr><td class="col-sl">20</td><td class="col-field">createdAt</td><td class="col-type">Date</td><td class="col-desc">Creation Date</td></tr>
+      <tr><td class="col-sl">21</td><td class="col-field">updatedAt</td><td class="col-type">Date</td><td class="col-desc">Last Update Date</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7. Delivery & Logistics Collection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-sl">Sl. No.</th>
+        <th class="col-field">Field Name</th>
+        <th class="col-type">Data Type</th>
+        <th class="col-desc">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-sl">1</td><td class="col-field">_id</td><td class="col-type">ObjectId</td><td class="col-desc">Unique Delivery ID</td></tr>
+      <tr><td class="col-sl">2</td><td class="col-field">donationId</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to Donation</td></tr>
+      <tr><td class="col-sl">3</td><td class="col-field">volunteerId</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to Volunteer</td></tr>
+      <tr><td class="col-sl">4</td><td class="col-field">assignedBy</td><td class="col-type">ObjectId</td><td class="col-desc">Reference to User</td></tr>
+      <tr><td class="col-sl">5</td><td class="col-field">pickupAddress</td><td class="col-type">String</td><td class="col-desc">Pickup Address</td></tr>
+      <tr><td class="col-sl">6</td><td class="col-field">dropAddress</td><td class="col-type">String</td><td class="col-desc">Drop-off Address</td></tr>
+      <tr><td class="col-sl">7</td><td class="col-field">pickupLat</td><td class="col-type">Number</td><td class="col-desc">Pickup Latitude</td></tr>
+      <tr><td class="col-sl">8</td><td class="col-field">pickupLng</td><td class="col-type">Number</td><td class="col-desc">Pickup Longitude</td></tr>
+      <tr><td class="col-sl">9</td><td class="col-field">dropLat</td><td class="col-type">Number</td><td class="col-desc">Drop Latitude</td></tr>
+      <tr><td class="col-sl">10</td><td class="col-field">dropLng</td><td class="col-type">Number</td><td class="col-desc">Drop Longitude</td></tr>
+      <tr><td class="col-sl">11</td><td class="col-field">scheduledTime</td><td class="col-type">Date</td><td class="col-desc">Scheduled Pickup Time</td></tr>
+      <tr><td class="col-sl">12</td><td class="col-field">status</td><td class="col-type">String</td><td class="col-desc">Assigned / Picked Up / In Transit / Delivered / Failed</td></tr>
+      <tr><td class="col-sl">13</td><td class="col-field">proofImages</td><td class="col-type">Array</td><td class="col-desc">Proof of Delivery Image Paths</td></tr>
+      <tr><td class="col-sl">14</td><td class="col-field">proofNote</td><td class="col-type">String</td><td class="col-desc">Delivery Confirmation Note</td></tr>
+      <tr><td class="col-sl">15</td><td class="col-field">pickedUpAt</td><td class="col-type">Date</td><td class="col-desc">Actual Pickup Timestamp</td></tr>
+      <tr><td class="col-sl">16</td><td class="col-field">deliveredAt</td><td class="col-type">Date</td><td class="col-desc">Actual Delivery Timestamp</td></tr>
+      <tr><td class="col-sl">17</td><td class="col-field">createdAt</td><td class="col-type">Date</td><td class="col-desc">Task Creation Date</td></tr>
+      <tr><td class="col-sl">18</td><td class="col-field">updatedAt</td><td class="col-type">Date</td><td class="col-desc">Last Update Date</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8. Notification Collection</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-sl">Sl. No.</th>
+        <th class="col-field">Field Name</th>
+        <th class="col-type">Data Type</th>
+        <th class="col-desc">Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="col-sl">1</td><td class="col-field">_id</td><td class="col-type">ObjectId</td><td class="col-desc">Unique Notification ID</td></tr>
+      <tr><td class="col-sl">2</td><td class="col-field">userId</td><td class="col-type">ObjectId</td><td class="col-desc">Target User ID</td></tr>
+      <tr><td class="col-sl">3</td><td class="col-field">title</td><td class="col-type">String</td><td class="col-desc">Notification Title</td></tr>
+      <tr><td class="col-sl">4</td><td class="col-field">message</td><td class="col-type">String</td><td class="col-desc">Notification Body Text</td></tr>
+      <tr><td class="col-sl">5</td><td class="col-field">type</td><td class="col-type">String</td><td class="col-desc">Donation / Requirement / Delivery / System / Match</td></tr>
+      <tr><td class="col-sl">6</td><td class="col-field">isRead</td><td class="col-type">Boolean</td><td class="col-desc">Read / Unread Flag</td></tr>
+      <tr><td class="col-sl">7</td><td class="col-field">relatedId</td><td class="col-type">ObjectId</td><td class="col-desc">Associated Entity ID</td></tr>
+      <tr><td class="col-sl">8</td><td class="col-field">relatedModel</td><td class="col-type">String</td><td class="col-desc">Donation / Requirement / Delivery</td></tr>
+      <tr><td class="col-sl">9</td><td class="col-field">createdAt</td><td class="col-type">Date</td><td class="col-desc">Notification Date</td></tr>
+      <tr><td class="col-sl">10</td><td class="col-field">updatedAt</td><td class="col-type">Date</td><td class="col-desc">Last Update Date</td></tr>
+    </tbody>
+  </table>
+
+</body>
+</html>

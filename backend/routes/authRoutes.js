@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/upload');
-const { signup, login, googleSignIn, forgotPassword, resetPassword } = require('../controllers/authController');
+const { signup, login, googleSignIn, forgotPassword, resetPassword, checkAvailability } = require('../controllers/authController');
 
 router.post(
   '/signup',
@@ -17,5 +17,7 @@ router.post('/google', googleSignIn);
 
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
+router.post('/check-availability', checkAvailability);
 
 module.exports = router;
+

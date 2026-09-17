@@ -30,7 +30,7 @@ const notificationSchema = new mongoose.Schema(
     },
     relatedModel: {
       type: String,
-      enum: ["Donation", "Requirement", "Delivery", null],
+      enum: ["Donation", "Requirement", "Delivery", "Message", null],
       default: null,
     },
   },

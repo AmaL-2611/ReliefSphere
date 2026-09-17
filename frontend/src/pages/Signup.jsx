@@ -79,11 +79,41 @@ const registrationPlaceholders = {
   ngo: "NGO Registration Number (Trust/Societies Act)",
   orphanage: "Orphanage License Number (Juvenile Justice Act)",
   old_age_home: "Old-Age Home Registration Number",
+  community_shelter: "Municipal Permit / Shelter License No. (e.g. CS-2026-1234)",
   government_school: "UDISE Code",
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[0-9]{10}$/;
+
+const validateRegistrationNumber = (value, orgType) => {
+  const val = (value || "").trim();
+  if (!val) return "Registration Number is required";
+
+  if (orgType === "government_school") {
+    if (!/^\d{11}$/.test(val)) return "UDISE Code must be an 11-digit number (e.g. 32010100101)";
+    return null;
+  }
+
+  if (val.length < 6) return "Registration Number must be at least 6 characters";
+  if (val.length > 30) return "Registration Number cannot exceed 30 characters";
+  if (!/^[A-Za-z0-9/-]+$/.test(val))
+    return "Only letters, numbers, slashes (/), and hyphens (-) are allowed";
+
+  const digitCount = (val.match(/\d/g) || []).length;
+  if (digitCount < 3) {
+    return "Registration Number must contain at least 3 numerical digits";
+  }
+
+  const hasDelimiter = /[/|-]/.test(val);
+  if (!hasDelimiter && !/^[A-Za-z]{2,4}\d{4,}$/.test(val)) {
+    return "Invalid format. Use standard format like KL/2021/0123456 or REG-12345";
+  }
+
+  return null;
+};
+
+
 const today = new Date();
 const maxDob = new Date(
   today.getFullYear() - 18,
@@ -99,6 +129,7 @@ const minDob = new Date(
 )
   .toISOString()
   .split("T")[0];
+
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -130,6 +161,12 @@ export default function Signup() {
   const [submitStatus, setSubmitStatus] = useState("idle");
   const navigate = useNavigate();
 
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldValidating, setFieldValidating] = useState({});
+  const [fieldSuccess, setFieldSuccess] = useState({});
+  const [fieldTouched, setFieldTouched] = useState({});
+  const checkTimeoutsRef = useRef({});
+
   const formDataRef = useRef(formData);
   useEffect(() => {
     if (formData.role !== "donor") {
@@ -141,6 +178,141 @@ export default function Signup() {
     }
     formDataRef.current = formData;
   }, [formData]);
+
+  const calcPasswordStrength = (pass) => {
+    if (!pass) return { score: 0, label: "", color: "#e2e8f0" };
+    let score = 0;
+    if (pass.length >= 6) score += 1;
+    if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass) || /[^A-Za-z0-9]/.test(pass)) score += 1;
+    if (pass.length >= 10) score += 1;
+
+    switch (score) {
+      case 1:
+        return { score: 25, label: "Weak", color: "#ef4444" };
+      case 2:
+        return { score: 50, label: "Fair", color: "#f59e0b" };
+      case 3:
+        return { score: 75, label: "Good", color: "#3b82f6" };
+      case 4:
+        return { score: 100, label: "Strong", color: "#22c55e" };
+      default:
+        return { score: 15, label: "Too short", color: "#ef4444" };
+    }
+  };
+
+  const performAjaxCheck = (field, value) => {
+    if (checkTimeoutsRef.current[field]) {
+      clearTimeout(checkTimeoutsRef.current[field]);
+    }
+    setFieldValidating((prev) => ({ ...prev, [field]: true }));
+    setFieldSuccess((prev) => ({ ...prev, [field]: "" }));
+
+    checkTimeoutsRef.current[field] = setTimeout(async () => {
+      try {
+        const res = await API.post("/auth/check-availability", {
+          field,
+          value: value.trim(),
+        });
+        setFieldValidating((prev) => ({ ...prev, [field]: false }));
+        if (!res.data.available) {
+          setFieldErrors((prev) => ({ ...prev, [field]: res.data.message }));
+          setFieldSuccess((prev) => ({ ...prev, [field]: "" }));
+        } else {
+          setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+          const label =
+            field === "email"
+              ? "Email address is available"
+              : field === "phone"
+                ? "Phone number is available"
+                : "Registration number is available";
+          setFieldSuccess((prev) => ({ ...prev, [field]: label }));
+        }
+      } catch {
+        setFieldValidating((prev) => ({ ...prev, [field]: false }));
+      }
+    }, 400);
+  };
+
+  const validateSingleField = (name, value, currentFormData = formData) => {
+    let err = "";
+    const role = currentFormData.role;
+
+    if (name === "fullName" && role !== "recipient_org") {
+      if (!value.trim()) err = "Full Name is required";
+      else if (value.trim().length < 2)
+        err = "Full Name must be at least 2 characters";
+    }
+
+    if (name === "orgName" && role === "recipient_org") {
+      if (!value.trim()) err = "Organization Name is required";
+      else if (value.trim().length < 2)
+        err = "Organization Name must be at least 2 characters";
+    }
+
+    if (name === "email") {
+      if (!value.trim()) err = "Email Address is required";
+      else if (!EMAIL_REGEX.test(value.trim()))
+        err = "Enter a valid email address";
+      else performAjaxCheck("email", value);
+    }
+
+    if (name === "phone") {
+      if (!value.trim()) err = "Phone Number is required";
+      else if (!PHONE_REGEX.test(value.trim()))
+        err = "Phone Number must be exactly 10 digits";
+      else performAjaxCheck("phone", value);
+    }
+
+    if (name === "password") {
+      if (!value) err = "Password is required";
+      else if (value.length < 6)
+        err = "Password must be at least 6 characters";
+      if (currentFormData.confirmPassword) {
+        if (value !== currentFormData.confirmPassword) {
+          setFieldErrors((prev) => ({
+            ...prev,
+            confirmPassword: "Passwords do not match",
+          }));
+        } else {
+          setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+        }
+      }
+    }
+
+    if (name === "confirmPassword") {
+      if (!value) err = "Please confirm your password";
+      else if (value !== currentFormData.password)
+        err = "Passwords do not match";
+    }
+
+    if (name === "registrationNumber" && role === "recipient_org") {
+      const regErr = validateRegistrationNumber(value, currentFormData.orgType);
+      if (regErr) err = regErr;
+      else performAjaxCheck("registrationNumber", value);
+    }
+
+
+    if (name === "dob" && role === "volunteer") {
+      if (!value) err = "Date of Birth is required";
+      else {
+        const age = Math.floor(
+          (new Date() - new Date(value)) / (365.25 * 24 * 60 * 60 * 1000),
+        );
+        if (age < 18)
+          err = "You must be at least 18 years old to register as a volunteer";
+      }
+    }
+
+    setFieldErrors((prev) => ({ ...prev, [name]: err }));
+    return err;
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setFieldTouched((prev) => ({ ...prev, [name]: true }));
+    validateSingleField(name, value);
+  };
 
   useEffect(() => {
     const handleCredentialResponse = async (response) => {
@@ -224,53 +396,99 @@ export default function Signup() {
       script.onload = initButton;
     }
   }, [navigate, formData.role]);
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  const handleCheckbox = (e) =>
-    setFormData({ ...formData, agreedToTerms: e.target.checked });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const updatedForm = { ...formData, [name]: value };
+    setFormData(updatedForm);
+    if (fieldTouched[name]) {
+      validateSingleField(name, value, updatedForm);
+    }
+  };
+
+  const handleCheckbox = (e) => {
+    const checked = e.target.checked;
+    setFormData({ ...formData, agreedToTerms: checked });
+    setFieldTouched((prev) => ({ ...prev, agreedToTerms: true }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      agreedToTerms: checked ? "" : "You must agree to the Terms & Conditions",
+    }));
+  };
 
   const toggleCategory = (cat) => {
     setFormData((prev) => {
       const has = prev.preferredCategories.includes(cat);
-      return {
-        ...prev,
-        preferredCategories: has
-          ? prev.preferredCategories.filter((c) => c !== cat)
-          : [...prev.preferredCategories, cat],
-      };
+      const updated = has
+        ? prev.preferredCategories.filter((c) => c !== cat)
+        : [...prev.preferredCategories, cat];
+      setFieldErrors((f) => ({
+        ...f,
+        preferredCategories:
+          updated.length === 0
+            ? "Select at least one preferred donation category"
+            : "",
+      }));
+      return { ...prev, preferredCategories: updated };
     });
   };
+
   const toggleSkill = (skill) => {
     setFormData((prev) => {
       const exists = prev.skills.includes(skill);
-
-      return {
-        ...prev,
-        skills: exists
-          ? prev.skills.filter((s) => s !== skill)
-          : [...prev.skills, skill],
-      };
+      const updated = exists
+        ? prev.skills.filter((s) => s !== skill)
+        : [...prev.skills, skill];
+      setFieldErrors((f) => ({
+        ...f,
+        skills: updated.length === 0 ? "Please select at least one skill" : "",
+      }));
+      return { ...prev, skills: updated };
     });
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-
-    if (!file) return;
-
-    if (file.type !== "application/pdf") {
-      setError("Only PDF verification documents are allowed.");
-      e.target.value = "";
+    if (!file) {
+      setFieldErrors((f) => ({
+        ...f,
+        verificationDoc: "Verification Document is required",
+      }));
       return;
     }
-
+    if (file.type !== "application/pdf") {
+      setFieldErrors((f) => ({
+        ...f,
+        verificationDoc: "Only PDF verification documents are allowed.",
+      }));
+      e.target.value = "";
+      setVerificationFile(null);
+      return;
+    }
+    setFieldErrors((f) => ({ ...f, verificationDoc: "" }));
     setError("");
     setVerificationFile(file);
   };
-  const handleVolunteerIdChange = (e) => setVolunteerIdFile(e.target.files[0]);
+
+  const handleVolunteerIdChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      setFieldErrors((f) => ({
+        ...f,
+        volunteerIdFile: "Government ID document is required",
+      }));
+      return;
+    }
+    setFieldErrors((f) => ({ ...f, volunteerIdFile: "" }));
+    setVolunteerIdFile(file);
+  };
+
   const handlePhoneChange = (e) => {
     const digitsOnly = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
-    setFormData({ ...formData, phone: digitsOnly });
+    const updatedForm = { ...formData, phone: digitsOnly };
+    setFormData(updatedForm);
+    setFieldTouched((prev) => ({ ...prev, phone: true }));
+    validateSingleField("phone", digitsOnly, updatedForm);
   };
 
   const handleRoleSelect = (role) => {
@@ -287,6 +505,10 @@ export default function Signup() {
     setVolunteerIdFile(null);
     setSubmitStatus("idle");
     setError("");
+    setFieldErrors({});
+    setFieldSuccess({});
+    setFieldTouched({});
+    setFieldValidating({});
   };
 
   const detectLocation = () => {
@@ -300,10 +522,6 @@ export default function Signup() {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
 
-        console.log("Latitude:", lat);
-        console.log("Longitude:", lon);
-        console.log("Accuracy:", position.coords.accuracy);
-
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`,
@@ -313,7 +531,6 @@ export default function Signup() {
           );
 
           const data = await res.json();
-
           const placeName = data.display_name || "Location detected";
 
           setLocationName(placeName);
@@ -335,6 +552,7 @@ export default function Signup() {
         }
 
         setLocationStatus("done");
+        setFieldErrors((f) => ({ ...f, location: "" }));
       },
       (error) => {
         console.log(error);
@@ -342,59 +560,83 @@ export default function Signup() {
       },
     );
   };
+
   const validateForm = () => {
     const { role } = formData;
+    const errors = {};
+
     if (role !== "recipient_org" && !formData.fullName.trim())
-      return "Full Name is required";
+      errors.fullName = "Full Name is required";
     if (role === "recipient_org" && !formData.orgName.trim())
-      return "Organization Name is required";
-    if (!formData.email.trim()) return "Email Address is required";
-    if (!EMAIL_REGEX.test(formData.email.trim()))
-      return "Enter a valid email address";
-    if (!formData.password) return "Password is required";
-    if (formData.password.length < 6)
-      return "Password must be at least 6 characters";
-    if (!formData.confirmPassword) return "Please confirm your password";
-    if (formData.password !== formData.confirmPassword)
-      return "Passwords do not match";
-    if (!formData.phone.trim()) return "Phone Number is required";
-    if (!PHONE_REGEX.test(formData.phone.trim()))
-      return "Phone Number must be exactly 10 digits";
+      errors.orgName = "Organization Name is required";
+    if (!formData.email.trim()) errors.email = "Email Address is required";
+    else if (!EMAIL_REGEX.test(formData.email.trim()))
+      errors.email = "Enter a valid email address";
+    if (!formData.password) errors.password = "Password is required";
+    else if (formData.password.length < 6)
+      errors.password = "Password must be at least 6 characters";
+    if (!formData.confirmPassword)
+      errors.confirmPassword = "Please confirm your password";
+    else if (formData.password !== formData.confirmPassword)
+      errors.confirmPassword = "Passwords do not match";
+    if (!formData.phone.trim()) errors.phone = "Phone Number is required";
+    else if (!PHONE_REGEX.test(formData.phone.trim()))
+      errors.phone = "Phone Number must be exactly 10 digits";
 
     if (role === "donor") {
       if (formData.preferredCategories.length === 0)
-        return "Select at least one preferred donation category";
-      if (locationStatus !== "done") return "Please detect your location";
-      if (!formData.address.trim())
-        return "Location/address could not be determined — try detecting location again";
+        errors.preferredCategories =
+          "Select at least one preferred donation category";
+      if (locationStatus !== "done" || !formData.address.trim())
+        errors.location = "Please detect your location";
     }
 
     if (role === "recipient_org") {
-      if (!formData.registrationNumber.trim())
-        return "Registration Number is required";
-      if (!verificationFile) return "Verification Document is required";
-      if (locationStatus !== "done") return "Please detect your location";
-      if (!formData.address.trim())
-        return "Location/address could not be determined — try detecting location again";
+      const regErr = validateRegistrationNumber(formData.registrationNumber, formData.orgType);
+      if (regErr) errors.registrationNumber = regErr;
+      if (!verificationFile)
+        errors.verificationDoc = "Verification Document is required";
+      if (locationStatus !== "done" || !formData.address.trim())
+        errors.location = "Please detect your location";
     }
+
 
     if (role === "volunteer") {
       if (formData.skills.length === 0)
-        return "Please select at least one skill";
-      if (!formData.dob) return "Date of Birth is required";
-      const age = Math.floor(
-        (new Date() - new Date(formData.dob)) / (365.25 * 24 * 60 * 60 * 1000),
-      );
-      if (age < 18)
-        return "You must be at least 18 years old to register as a volunteer";
-      if (!volunteerIdFile) return "Government ID document is required";
-      if (locationStatus !== "done") return "Please detect your location";
-      if (!formData.address.trim())
-        return "Location/address could not be determined — try detecting location again";
+        errors.skills = "Please select at least one skill";
+      if (!formData.dob) errors.dob = "Date of Birth is required";
+      else {
+        const age = Math.floor(
+          (new Date() - new Date(formData.dob)) /
+            (365.25 * 24 * 60 * 60 * 1000),
+        );
+        if (age < 18)
+          errors.dob =
+            "You must be at least 18 years old to register as a volunteer";
+      }
+      if (!volunteerIdFile)
+        errors.volunteerIdFile = "Government ID document is required";
+      if (locationStatus !== "done" || !formData.address.trim())
+        errors.location = "Please detect your location";
     }
 
     if (!formData.agreedToTerms)
-      return "You must agree to the Terms & Conditions";
+      errors.agreedToTerms = "You must agree to the Terms & Conditions";
+
+    const allTouched = Object.keys(formData).reduce(
+      (acc, key) => ({ ...acc, [key]: true }),
+      {},
+    );
+    setFieldTouched(allTouched);
+    setFieldErrors((prev) => ({ ...prev, ...errors }));
+
+    const hasAnyError =
+      Object.values(errors).some(Boolean) ||
+      Object.values(fieldErrors).some(Boolean);
+
+    if (hasAnyError) {
+      return Object.values(errors).find(Boolean) || "Please fix errors in the form";
+    }
     return null;
   };
 
@@ -441,6 +683,7 @@ export default function Signup() {
       setError(err.response?.data?.message || "Signup failed");
     }
   };
+
 
   if (submitStatus === "pending_approval") {
     return (
@@ -581,7 +824,32 @@ export default function Signup() {
                         placeholder={registrationPlaceholders[formData.orgType]}
                         value={formData.registrationNumber}
                         onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={
+                          fieldErrors.registrationNumber
+                            ? "input-has-error"
+                            : fieldSuccess.registrationNumber
+                              ? "input-is-valid"
+                              : ""
+                        }
                       />
+                      {fieldValidating.registrationNumber && (
+                        <div className="field-checking-msg">
+                          <span className="spinner-mini"></span> Checking registration number...
+                        </div>
+                      )}
+                      {fieldErrors.registrationNumber && (
+                        <div className="field-error-msg">
+                          ⚠️ {fieldErrors.registrationNumber}
+                        </div>
+                      )}
+                      {fieldSuccess.registrationNumber &&
+                        !fieldErrors.registrationNumber &&
+                        !fieldValidating.registrationNumber && (
+                          <div className="field-success-msg">
+                            ✓ {fieldSuccess.registrationNumber}
+                          </div>
+                        )}
                     </div>
                   </div>
                   <div className="form-group">
@@ -591,7 +859,18 @@ export default function Signup() {
                       placeholder="Your organization's name"
                       value={formData.orgName}
                       onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={
+                        fieldErrors.orgName
+                          ? "input-has-error"
+                          : fieldTouched.orgName && !fieldErrors.orgName && formData.orgName
+                            ? "input-is-valid"
+                            : ""
+                      }
                     />
+                    {fieldErrors.orgName && (
+                      <div className="field-error-msg">⚠️ {fieldErrors.orgName}</div>
+                    )}
                   </div>
                 </>
               )}
@@ -604,7 +883,18 @@ export default function Signup() {
                     placeholder="Your full name"
                     value={formData.fullName}
                     onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={
+                      fieldErrors.fullName
+                        ? "input-has-error"
+                        : fieldTouched.fullName && !fieldErrors.fullName && formData.fullName
+                          ? "input-is-valid"
+                          : ""
+                    }
                   />
+                  {fieldErrors.fullName && (
+                    <div className="field-error-msg">⚠️ {fieldErrors.fullName}</div>
+                  )}
                 </div>
               )}
 
@@ -617,7 +907,30 @@ export default function Signup() {
                     placeholder="name@example.com"
                     value={formData.email}
                     onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={
+                      fieldErrors.email
+                        ? "input-has-error"
+                        : fieldSuccess.email
+                          ? "input-is-valid"
+                          : ""
+                    }
                   />
+                  {fieldValidating.email && (
+                    <div className="field-checking-msg">
+                      <span className="spinner-mini"></span> Checking email availability...
+                    </div>
+                  )}
+                  {fieldErrors.email && (
+                    <div className="field-error-msg">⚠️ {fieldErrors.email}</div>
+                  )}
+                  {fieldSuccess.email &&
+                    !fieldErrors.email &&
+                    !fieldValidating.email && (
+                      <div className="field-success-msg">
+                        ✓ {fieldSuccess.email}
+                      </div>
+                    )}
                 </div>
                 <div className="form-group">
                   <label>Phone Number</label>
@@ -628,8 +941,31 @@ export default function Signup() {
                     placeholder="10-digit contact number"
                     value={formData.phone}
                     onChange={handlePhoneChange}
+                    onBlur={handleBlur}
                     maxLength={10}
+                    className={
+                      fieldErrors.phone
+                        ? "input-has-error"
+                        : fieldSuccess.phone
+                          ? "input-is-valid"
+                          : ""
+                    }
                   />
+                  {fieldValidating.phone && (
+                    <div className="field-checking-msg">
+                      <span className="spinner-mini"></span> Checking phone availability...
+                    </div>
+                  )}
+                  {fieldErrors.phone && (
+                    <div className="field-error-msg">⚠️ {fieldErrors.phone}</div>
+                  )}
+                  {fieldSuccess.phone &&
+                    !fieldErrors.phone &&
+                    !fieldValidating.phone && (
+                      <div className="field-success-msg">
+                        ✓ {fieldSuccess.phone}
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -642,7 +978,37 @@ export default function Signup() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={
+                      fieldErrors.password
+                        ? "input-has-error"
+                        : formData.password && !fieldErrors.password
+                          ? "input-is-valid"
+                          : ""
+                    }
                   />
+                  {fieldErrors.password && (
+                    <div className="field-error-msg">⚠️ {fieldErrors.password}</div>
+                  )}
+                  {formData.password && (
+                    <div className="password-strength-container">
+                      <div className="password-strength-bar-track">
+                        <div
+                          className="password-strength-bar-fill"
+                          style={{
+                            width: `${calcPasswordStrength(formData.password).score}%`,
+                            backgroundColor: calcPasswordStrength(formData.password).color,
+                          }}
+                        ></div>
+                      </div>
+                      <span
+                        className="password-strength-label"
+                        style={{ color: calcPasswordStrength(formData.password).color }}
+                      >
+                        Strength: {calcPasswordStrength(formData.password).label}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Confirm Password</label>
@@ -652,7 +1018,21 @@ export default function Signup() {
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={
+                      fieldErrors.confirmPassword
+                        ? "input-has-error"
+                        : formData.confirmPassword && !fieldErrors.confirmPassword
+                          ? "input-is-valid"
+                          : ""
+                    }
                   />
+                  {fieldErrors.confirmPassword && (
+                    <div className="field-error-msg">⚠️ {fieldErrors.confirmPassword}</div>
+                  )}
+                  {formData.confirmPassword && !fieldErrors.confirmPassword && (
+                    <div className="field-success-msg">✓ Passwords match</div>
+                  )}
                 </div>
               </div>
 
@@ -674,6 +1054,11 @@ export default function Signup() {
                         </div>
                       ))}
                     </div>
+                    {fieldErrors.preferredCategories && (
+                      <div className="field-error-msg">
+                        ⚠️ {fieldErrors.preferredCategories}
+                      </div>
+                    )}
                   </div>
                   <div className="form-group">
                     <button
@@ -695,6 +1080,9 @@ export default function Signup() {
                       <p className="location-hint error">
                         Couldn't detect location — check browser permissions
                       </p>
+                    )}
+                    {fieldErrors.location && (
+                      <div className="field-error-msg">⚠️ {fieldErrors.location}</div>
                     )}
                   </div>
                   {locationStatus === "done" && (
@@ -718,6 +1106,16 @@ export default function Signup() {
                       accept="application/pdf,.pdf"
                       onChange={handleFileChange}
                     />
+                    {fieldErrors.verificationDoc && (
+                      <div className="field-error-msg">
+                        ⚠️ {fieldErrors.verificationDoc}
+                      </div>
+                    )}
+                    {verificationFile && (
+                      <div className="field-success-msg">
+                        ✓ {verificationFile.name}
+                      </div>
+                    )}
                   </div>
                   <div className="form-group">
                     <button
@@ -739,6 +1137,9 @@ export default function Signup() {
                       <p className="location-hint error">
                         Couldn't detect location — check browser permissions
                       </p>
+                    )}
+                    {fieldErrors.location && (
+                      <div className="field-error-msg">⚠️ {fieldErrors.location}</div>
                     )}
                   </div>
                   {locationStatus === "done" && (
@@ -756,8 +1157,6 @@ export default function Signup() {
                     <span className="section-badge">2</span>Verification
                   </div>
                   <div className="form-group">
-                    <div className="form-group"></div>
-
                     <div className="form-group">
                       <label>Volunteer Skills</label>
 
@@ -774,6 +1173,9 @@ export default function Signup() {
                           </div>
                         ))}
                       </div>
+                      {fieldErrors.skills && (
+                        <div className="field-error-msg">⚠️ {fieldErrors.skills}</div>
+                      )}
                     </div>
                     <label>Date of Birth</label>
                     <input
@@ -781,9 +1183,20 @@ export default function Signup() {
                       type="date"
                       value={formData.dob}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       max={maxDob}
                       min={minDob}
+                      className={
+                        fieldErrors.dob
+                          ? "input-has-error"
+                          : formData.dob && !fieldErrors.dob
+                            ? "input-is-valid"
+                            : ""
+                      }
                     />
+                    {fieldErrors.dob && (
+                      <div className="field-error-msg">⚠️ {fieldErrors.dob}</div>
+                    )}
                   </div>
                   <div className="form-group">
                     <label>Government ID (Aadhar / College ID / License)</label>
@@ -792,16 +1205,15 @@ export default function Signup() {
                       accept=".pdf,.jpg,.jpeg,.png"
                       onChange={handleVolunteerIdChange}
                     />
-                    {verificationFile && (
-                      <p
-                        style={{
-                          color: "#16a34a",
-                          fontSize: "14px",
-                          marginTop: "8px",
-                        }}
-                      >
-                        ✓ {verificationFile.name}
-                      </p>
+                    {fieldErrors.volunteerIdFile && (
+                      <div className="field-error-msg">
+                        ⚠️ {fieldErrors.volunteerIdFile}
+                      </div>
+                    )}
+                    {volunteerIdFile && (
+                      <div className="field-success-msg">
+                        ✓ {volunteerIdFile.name}
+                      </div>
                     )}
                   </div>
                   <div className="form-group">
@@ -824,6 +1236,9 @@ export default function Signup() {
                       <p className="location-hint error">
                         Couldn't detect location — check browser permissions
                       </p>
+                    )}
+                    {fieldErrors.location && (
+                      <div className="field-error-msg">⚠️ {fieldErrors.location}</div>
                     )}
                   </div>
                   {locationStatus === "done" && (
@@ -851,6 +1266,11 @@ export default function Signup() {
                     Privacy Policy
                   </span>
                 </label>
+                {fieldErrors.agreedToTerms && (
+                  <div className="field-error-msg">
+                    ⚠️ {fieldErrors.agreedToTerms}
+                  </div>
+                )}
               </div>
 
               {error && <p className="error-text">{error}</p>}
@@ -858,6 +1278,7 @@ export default function Signup() {
               <button type="submit" className="submit-btn">
                 Sign Up
               </button>
+
             </form>
 
             {formData.role === "donor" && (

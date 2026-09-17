@@ -7,6 +7,7 @@ import {
   FaGift,
   FaTruck,
   FaBullhorn,
+  FaClipboardList,
   FaChartBar,
   FaCog,
   FaSignOutAlt,
@@ -21,7 +22,8 @@ const menuItems = [
   { name: "Donors", icon: <FaUsers />, path: "/admin/donors" },
   { name: "Donations", icon: <FaGift />, path: "/admin/donations" },
   { name: "Deliveries", icon: <FaTruck />, path: "/admin/deliveries" },
-  { name: "Req. Requests", icon: <FaBullhorn />, path: "/admin/campaigns" },
+  { name: "Req. Requests", icon: <FaClipboardList />, path: "/admin/requirements" },
+  { name: "Campaigns", icon: <FaBullhorn />, path: "/admin/campaigns" },
   { name: "Analytics", icon: <FaChartBar />, path: "/admin/analytics" },
   { name: "Settings", icon: <FaCog />, path: "/admin/settings" },
 ];

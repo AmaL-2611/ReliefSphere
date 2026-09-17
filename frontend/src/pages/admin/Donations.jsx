@@ -211,7 +211,7 @@ export default function Donations() {
                       </td>
                       <td style={{ padding: "14px 16px" }}>
                         <div style={{ display: "flex", gap: 8 }}>
-                          {["accepted", "matched"].includes(d.status) && (
+                          {["pending", "accepted", "matched"].includes(d.status) && (
                             <button
                               style={{
                                 background: "#4f46e5",

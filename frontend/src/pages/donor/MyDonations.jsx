@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import ChatModal from "../../components/chat/ChatModal";
 
 const STATUS_MAP = {
   pending: { label: "Pending NGO Approval ⏳", bg: "#fef3c7", color: "#92400e" },
@@ -41,6 +42,16 @@ export default function MyDonations() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+
+  // Chat modal state
+  const [chatConfig, setChatConfig] = useState({
+    isOpen: false,
+    conversationId: "",
+    recipientId: "",
+    recipientName: "",
+    recipientRole: "",
+    title: "",
+  });
 
   const fetchDonations = async () => {
     setLoading(true);
@@ -98,105 +109,52 @@ export default function MyDonations() {
 
   return (
     <>
-      <div className="page-header">
-        <h1 className="page-title">My Pledged Donations</h1>
-        <p className="page-subtitle">Track and manage all your requirement pledges and direct donations.</p>
-      </div>
-
-      {/* Summary Filter Pills */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap", alignItems: "center" }}>
-        {[
-          { key: "all", label: "All Pledges", value: stats.total || 0, color: "#10b981", bg: "#d1fae5" },
-          { key: "pending", label: "Pending Approval", value: stats.pending || 0, color: "#ea580c", bg: "#fff7ed" },
-          { key: "accepted", label: "Accepted", value: donations.filter(d => d.status === "accepted").length, color: "#15803d", bg: "#dcfce7" },
-          { key: "delivered", label: "Delivered", value: stats.delivered || 0, color: "#16a34a", bg: "#f0fdf4" },
-        ].map((s) => (
-          <button
-            key={s.key}
-            onClick={() => setFilterStatus(s.key)}
-            style={{
-              background: filterStatus === s.key ? s.color : s.bg,
-              color: filterStatus === s.key ? "white" : s.color,
-              padding: "8px 18px",
-              borderRadius: 12,
-              border: `1.5px solid ${filterStatus === s.key ? s.color : "transparent"}`,
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              transition: "all 0.2s",
-            }}
-          >
-            <span style={{ fontSize: 17 }}>{s.value}</span>
-            <span style={{ fontWeight: 500 }}>{s.label}</span>
-          </button>
-        ))}
-
-        <button
-          className="btn-submit"
-          style={{ marginLeft: "auto", padding: "9px 20px", fontSize: 13 }}
-          onClick={() => navigate("/donor/browse-requirements")}
-          id="browse-req-cta-btn"
-        >
-          🔍 Browse NGO Requirements
-        </button>
-      </div>
-
-      {/* Table */}
-      <div className="section-card">
-        <div className="section-card-header">
-          <div className="section-card-title">
-            <span className="section-card-title-dot" />
-            {filterStatus === "all" ? "All Pledged Donations" : `${filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)} Donations`}
+      <div style={{ padding: "8px 0" }}>
+        {/* Header */}
+        <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1e293b" }}>My Relief Donations</h2>
+            <p style={{ color: "#64748b", fontSize: 14 }}>
+              Track the status of your pledged donations and communication with recipient organizations.
+            </p>
           </div>
-          <span style={{ fontSize: 12, color: "#94a3b8" }}>{filtered.length} records</span>
+          <button
+            className="action-btn"
+            style={{ background: "#059669", color: "white", padding: "10px 18px", borderRadius: 10, fontWeight: 700 }}
+            onClick={() => navigate("/donor/browse-requirements")}
+          >
+            + Pledge New Donation
+          </button>
         </div>
-        <div className="section-card-body">
+
+        {/* Donations Table */}
+        <div style={{ background: "white", borderRadius: 16, padding: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
           {loading ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">⏳</div>
-              <div className="empty-state-text">Loading pledges…</div>
-            </div>
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#64748b" }}>Loading donations…</div>
           ) : filtered.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-state-icon">📦</div>
-              <div className="empty-state-text">No donation pledges found</div>
-              <div className="empty-state-sub">
-                <button
-                  className="btn-submit"
-                  style={{ marginTop: 14, padding: "10px 22px", fontSize: 13 }}
-                  onClick={() => navigate("/donor/browse-requirements")}
-                >
-                  Browse Open Requirements to Donate
-                </button>
-              </div>
-            </div>
+            <div style={{ textAlign: "center", padding: "40px 0", color: "#64748b" }}>No donations found.</div>
           ) : (
-            <table className="donor-table">
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
               <thead>
-                <tr>
-                  <th>Requirement Name</th>
-                  <th>NGO Name</th>
-                  <th>Quantity Pledged</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                <tr style={{ borderBottom: "1px solid #e2e8f0", fontSize: 12, color: "#64748b", textTransform: "uppercase" }}>
+                  <th style={{ padding: "12px 16px" }}>Donation / Requirement</th>
+                  <th style={{ padding: "12px 16px" }}>Recipient NGO</th>
+                  <th style={{ padding: "12px 16px" }}>Quantity</th>
+                  <th style={{ padding: "12px 16px" }}>Date</th>
+                  <th style={{ padding: "12px 16px" }}>Status</th>
+                  <th style={{ padding: "12px 16px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((d) => (
-                  <tr key={d._id}>
-                    <td>
-                      <div style={{ fontWeight: 700, color: "#0f172a" }}>
-                        {d.matchedRequirement?.title || d.donationName}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>📍 {d.pickupAddress}</div>
+                  <tr key={d._id} style={{ borderBottom: "1px solid #f1f5f9", fontSize: 14 }}>
+                    <td style={{ padding: "16px" }}>
+                      <div style={{ fontWeight: 700, color: "#1e293b" }}>{d.donationName || d.matchedRequirement?.title || "Relief Supply"}</div>
+                      <div style={{ fontSize: 12, color: "#64748b" }}>📍 {d.pickupAddress}</div>
                     </td>
-                    <td>
-                      <div style={{ fontWeight: 700, color: "#0284c7" }}>
-                        {d.matchedOrganization?.orgName || "Hope Foundation"}
+                    <td style={{ padding: "16px" }}>
+                      <div style={{ fontWeight: 600, color: "#334155" }}>
+                        🏢 {d.matchedOrganization?.orgName || "Recipient NGO"}
                       </div>
                     </td>
                     <td style={{ fontWeight: 800, color: "#059669" }}>
@@ -209,7 +167,7 @@ export default function MyDonations() {
                       <StatusBadge status={d.status} />
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 7 }}>
+                      <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
                         <button
                           className="action-btn action-btn-view"
                           id={`view-${d._id}`}
@@ -217,6 +175,33 @@ export default function MyDonations() {
                         >
                           👁 Track
                         </button>
+
+                        <button
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: 8,
+                            border: "1px solid #0891b2",
+                            background: "#ecfeff",
+                            color: "#0891b2",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                          onClick={() => {
+                            const orgUser = d.matchedOrganization;
+                            setChatConfig({
+                              isOpen: true,
+                              conversationId: `conv_donation_${d._id}_donor`,
+                              recipientId: orgUser?.userId || orgUser?._id,
+                              recipientName: orgUser?.orgName || "Organization",
+                              recipientRole: "Organization",
+                              title: `Logistics Chat - ${d.donationName}`,
+                            });
+                          }}
+                        >
+                          💬 Chat
+                        </button>
+
                         {d.status === "pending" && (
                           <button
                             className="action-btn action-btn-delete"
@@ -276,6 +261,17 @@ export default function MyDonations() {
           </div>
         </div>
       )}
+
+      {/* Chat Modal */}
+      <ChatModal
+        isOpen={chatConfig.isOpen}
+        onClose={() => setChatConfig((prev) => ({ ...prev, isOpen: false }))}
+        conversationId={chatConfig.conversationId}
+        recipientId={chatConfig.recipientId}
+        recipientName={chatConfig.recipientName}
+        recipientRole={chatConfig.recipientRole}
+        title={chatConfig.title}
+      />
     </>
   );
 }

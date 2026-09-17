@@ -88,7 +88,7 @@ exports.signup = async (req, res) => {
         latitude,
         longitude,
         verificationDocs: verificationDocPath ? [verificationDocPath] : [],
-        verificationStatus: "verified",
+        verificationStatus: "pending",
       });
     }
 
@@ -390,3 +390,49 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+exports.checkAvailability = async (req, res) => {
+  try {
+    const { field, value } = req.body;
+    if (!field || !value) {
+      return res.status(400).json({ available: true });
+    }
+
+    const trimmedValue = value.trim();
+
+    if (field === "email") {
+      const existingUser = await User.findOne({
+        email: { $regex: new RegExp(`^${trimmedValue}$`, "i") },
+      });
+      if (existingUser) {
+        return res.status(200).json({
+          available: false,
+          message: "This email address is already registered.",
+        });
+      }
+    } else if (field === "phone") {
+      const existingUser = await User.findOne({ phone: trimmedValue });
+      if (existingUser) {
+        return res.status(200).json({
+          available: false,
+          message: "This phone number is already registered.",
+        });
+      }
+    } else if (field === "registrationNumber") {
+      const existingOrg = await RecipientOrganization.findOne({
+        registrationNumber: trimmedValue,
+      });
+      if (existingOrg) {
+        return res.status(200).json({
+          available: false,
+          message: "This registration number is already registered.",
+        });
+      }
+    }
+
+    return res.status(200).json({ available: true, message: "Available" });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+};
+

@@ -8,6 +8,8 @@ import TrackDonation from "./TrackDonation";
 import DonorProfile from "./DonorProfile";
 import BrowseRequirements from "./BrowseRequirements";
 import DonorDonateRequirement from "./DonorDonateRequirement";
+import BrowseCampaigns from "./BrowseCampaigns";
+import DonateCampaign from "./DonateCampaign";
 import "./donor.css";
 
 export default function DonorDashboard() {
@@ -68,6 +70,28 @@ export default function DonorDashboard() {
                 <DonorNavbar pageTitle="My Profile" />
                 <div className="donor-content">
                   <DonorProfile />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="browse-campaigns"
+            element={
+              <>
+                <DonorNavbar pageTitle="Browse Campaigns" />
+                <div className="donor-content">
+                  <BrowseCampaigns />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="donate-campaign/:campaignId"
+            element={
+              <>
+                <DonorNavbar pageTitle="Donate To Campaign" />
+                <div className="donor-content">
+                  <DonateCampaign />
                 </div>
               </>
             }

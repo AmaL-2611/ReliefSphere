@@ -1,7 +1,9 @@
 const User = require("../models/userModel");
 const Volunteer = require("../models/volunteerModel");
 const RecipientOrganization = require("../models/RecipientOrganization");
+const Settings = require("../models/settingsModel");
 const sendEmail = require("../utils/sendEmail");
+
 
 exports.getDonors = async (req, res) => {
   try {
@@ -416,3 +418,38 @@ exports.rejectOrganization = async (req, res) => {
     });
   }
 };
+
+/* ===========================
+   SETTINGS CONTROLLERS
+=========================== */
+
+exports.getSettings = async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = await Settings.create({});
+    }
+    res.status(200).json({ success: true, settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+exports.updateSettings = async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings(req.body);
+    } else {
+      if (req.body.aiWeights) settings.aiWeights = { ...settings.aiWeights, ...req.body.aiWeights };
+      if (req.body.distanceThresholds) settings.distanceThresholds = { ...settings.distanceThresholds, ...req.body.distanceThresholds };
+      if (req.body.notifications) settings.notifications = { ...settings.notifications, ...req.body.notifications };
+      if (req.body.system) settings.system = { ...settings.system, ...req.body.system };
+    }
+    await settings.save();
+    res.status(200).json({ success: true, message: "Settings updated successfully", settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+

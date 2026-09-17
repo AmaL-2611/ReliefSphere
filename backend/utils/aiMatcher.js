@@ -13,6 +13,8 @@
 const Requirement = require("../models/requirementModel");
 const Notification = require("../models/notificationModel");
 const RecipientOrganization = require("../models/RecipientOrganization");
+const Settings = require("../models/settingsModel");
+const Campaign = require("../models/campaignModel");
 
 /* ─── Haversine Distance (km) ─── */
 function haversineDistance(lat1, lon1, lat2, lon2) {
@@ -31,38 +33,54 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 /* ─── Core Score Calculator ─── */
-function calculateMatchScore(donation, requirement) {
+function calculateMatchScore(donation, requirement, customWeights = null, customDistances = null) {
   let score = 0;
 
-  // Factor 1: Category Match (40 pts)
+  const weights = customWeights || {
+    categoryMatch: 40,
+    quantityRatio: 25,
+    urgency: 20,
+    proximity: 15,
+  };
+
+  const distances = customDistances || {
+    localKm: 5,
+    districtKm: 20,
+    regionalKm: 50,
+    maxRadiusKm: 100,
+  };
+
+  // Factor 1: Category Match
   if (donation.category === requirement.category) {
-    score += 40;
+    score += weights.categoryMatch;
   }
 
-  // Factor 2: Quantity Adequacy (25 pts)
+  // Factor 2: Quantity Adequacy
   if (requirement.quantity > 0) {
     const ratio = donation.quantity / requirement.quantity;
-    if (ratio >= 1.0)       score += 25;
-    else if (ratio >= 0.75) score += 18;
-    else if (ratio >= 0.5)  score += 10;
-    else if (ratio >= 0.25) score += 5;
+    if (ratio >= 1.0)       score += weights.quantityRatio;
+    else if (ratio >= 0.75) score += weights.quantityRatio * 0.72;
+    else if (ratio >= 0.5)  score += weights.quantityRatio * 0.40;
+    else if (ratio >= 0.25) score += weights.quantityRatio * 0.20;
   }
 
-  // Factor 3: Urgency Bonus (20 pts)
-  const urgencyScore = { low: 5, medium: 10, high: 15, critical: 20 };
-  score += urgencyScore[requirement.urgency] || 5;
+  // Factor 3: Urgency Bonus
+  const urgencyRatios = { low: 0.25, medium: 0.50, high: 0.75, critical: 1.0 };
+  const urgRatio = urgencyRatios[requirement.urgency] || 0.25;
+  score += weights.urgency * urgRatio;
 
-  // Factor 4: Distance Score (15 pts)
+  // Factor 4: Distance Score
   const distKm = haversineDistance(
     donation.latitude,
     donation.longitude,
     requirement.latitude,
     requirement.longitude
   );
-  if (distKm <= 5)        score += 15;
-  else if (distKm <= 20)  score += 10;
-  else if (distKm <= 50)  score += 5;
-  else if (distKm <= 100) score += 2;
+
+  if (distKm <= distances.localKm)         score += weights.proximity;
+  else if (distKm <= distances.districtKm) score += weights.proximity * 0.66;
+  else if (distKm <= distances.regionalKm) score += weights.proximity * 0.33;
+  else if (distKm <= distances.maxRadiusKm) score += weights.proximity * 0.13;
 
   return Math.min(Math.round(score), 100);
 }
@@ -70,6 +88,36 @@ function calculateMatchScore(donation, requirement) {
 /* ─── Main Matcher: finds best requirements for a donation ─── */
 async function matchDonationToRequirements(donation) {
   try {
+    let settings = null;
+    try {
+      settings = await Settings.findOne();
+    } catch (e) {
+      console.error("Could not fetch settings for AI matcher:", e.message);
+    }
+
+    const activeWeights = settings?.aiWeights || null;
+    const activeDistances = settings?.distanceThresholds || null;
+    const minThreshold = settings?.aiWeights?.minMatchThreshold || 40;
+
+    // Fetch active priority campaigns
+    const now = new Date();
+    let activeCampaigns = [];
+    try {
+      activeCampaigns = await Campaign.find({
+        startDate: { $lte: now },
+        endDate: { $gte: now },
+      });
+    } catch (e) {
+      console.error("Could not fetch active campaigns for AI matcher:", e.message);
+    }
+
+    const campaignOrgIds = new Set();
+    activeCampaigns.forEach((camp) => {
+      if (camp.linkedOrgIds && Array.isArray(camp.linkedOrgIds)) {
+        camp.linkedOrgIds.forEach((orgId) => campaignOrgIds.add(orgId.toString()));
+      }
+    });
+
     // Fetch all open requirements in the same category
     const candidates = await Requirement.find({
       category: donation.category,
@@ -83,7 +131,15 @@ async function matchDonationToRequirements(donation) {
     // Score each requirement
     const scored = candidates
       .map((req) => {
-        const score = calculateMatchScore(donation, req);
+        let baseScore = calculateMatchScore(donation, req, activeWeights, activeDistances);
+        const orgIdStr = req.organizationId?._id ? req.organizationId._id.toString() : null;
+        const isCampaignActive = orgIdStr && campaignOrgIds.has(orgIdStr);
+
+        // Apply +15 Priority Campaign Bonus if org is linked to an active campaign
+        if (isCampaignActive) {
+          baseScore = Math.min(100, baseScore + 15);
+        }
+
         const distKm = haversineDistance(
           donation.latitude,
           donation.longitude,
@@ -95,9 +151,12 @@ async function matchDonationToRequirements(donation) {
           requirementId: req._id,
           organizationId: req.organizationId?._id,
           organizationName: req.organizationId?.orgName || "Unknown Org",
-          score,
+          score: baseScore,
+          isCampaignPriority: isCampaignActive,
           distanceKm: Math.round(distKm * 10) / 10,
           category: req.category,
+
+
           urgency: req.urgency,
           quantityNeeded: req.quantity,
           quantityOffered: donation.quantity,

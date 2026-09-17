@@ -15,6 +15,13 @@ export default function OrgHome() {
   const orgName = user.fullName || "Organization";
 
   const [stats, setStats] = useState({ total: 0, open: 0, matched: 0, fulfilled: 0 });
+  const [campaignStats, setCampaignStats] = useState({
+    totalCampaigns: 0,
+    activeCampaigns: 0,
+    completedCampaigns: 0,
+    totalDonationsReceived: 0,
+  });
+  const [isCampaignEligible, setIsCampaignEligible] = useState(false);
   const [requirements, setRequirements] = useState([]);
   const [incomingCount, setIncomingCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -23,6 +30,7 @@ export default function OrgHome() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
+
         // Get requirements stats
         const reqRes = await API.get("/requirements/org/my", {
           headers: { Authorization: `Bearer ${token}` },
@@ -36,6 +44,22 @@ export default function OrgHome() {
         });
         const incoming = (donRes.data.donations || []).filter((d) => d.status === "matched");
         setIncomingCount(incoming.length);
+
+        // Fetch Campaign stats for eligible orgs (NGO & Community Shelter)
+        try {
+          const campRes = await API.get("/campaigns/org-stats", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (campRes.data.success) {
+            setCampaignStats(campRes.data.stats || {});
+            const orgType = campRes.data.orgType;
+            if (orgType === "community_shelter") {
+              setIsCampaignEligible(true);
+            }
+          }
+        } catch (e) {
+          // Ignore error if org is not eligible for campaigns
+        }
       } catch (err) {
         console.error("Failed to load organization dashboard data");
       } finally {
@@ -45,10 +69,11 @@ export default function OrgHome() {
     fetchData();
   }, []);
 
-  // Calculate trust score (fulfilled / total * 100 or default 95%)
-  const trustScore = stats.total > 0
-    ? Math.round(((stats.fulfilled + stats.matched) / stats.total) * 100)
-    : 95;
+  // Calculate trust score
+  const trustScore =
+    stats.total > 0
+      ? Math.round(((stats.fulfilled + stats.matched) / stats.total) * 100)
+      : 95;
 
   return (
     <>
@@ -56,12 +81,12 @@ export default function OrgHome() {
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1e293b" }}>Welcome, {orgName} 👋</h1>
         <p style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>
-          Manage your resource requirements and accept incoming AI-matched donations.
+          Manage your resource requirements and public fundraising campaigns.
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="org-stats-grid">
+      {/* Requirements Stats Grid */}
+      <div className="org-stats-grid" style={{ marginBottom: 24 }}>
         <div className="org-stat-card">
           <div className="org-stat-accent" style={{ background: "linear-gradient(90deg, #0891b2, #06b6d4)" }} />
           <div className="org-stat-top">
@@ -99,6 +124,52 @@ export default function OrgHome() {
         </div>
       </div>
 
+      {/* Campaign Stats Grid (For NGO & Community Shelter) */}
+      {isCampaignEligible && (
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: "#1e293b", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <span>🚀 Campaign Metrics</span>
+          </div>
+          <div className="org-stats-grid">
+            <div className="org-stat-card">
+              <div className="org-stat-accent" style={{ background: "linear-gradient(90deg, #10b981, #059669)" }} />
+              <div className="org-stat-top">
+                <div className="org-stat-icon" style={{ background: "#d1fae5", color: "#047857" }}>📢</div>
+              </div>
+              <div className="org-stat-value">{loading ? "…" : campaignStats.totalCampaigns || 0}</div>
+              <div className="org-stat-label">Total Campaigns</div>
+            </div>
+
+            <div className="org-stat-card">
+              <div className="org-stat-accent" style={{ background: "linear-gradient(90deg, #0284c7, #38bdf8)" }} />
+              <div className="org-stat-top">
+                <div className="org-stat-icon" style={{ background: "#e0f2fe", color: "#0284c7" }}>⚡</div>
+              </div>
+              <div className="org-stat-value">{loading ? "…" : campaignStats.activeCampaigns || 0}</div>
+              <div className="org-stat-label">Active Campaigns</div>
+            </div>
+
+            <div className="org-stat-card">
+              <div className="org-stat-accent" style={{ background: "linear-gradient(90deg, #8b5cf6, #a78bfa)" }} />
+              <div className="org-stat-top">
+                <div className="org-stat-icon" style={{ background: "#f3e8ff", color: "#7c3aed" }}>🏆</div>
+              </div>
+              <div className="org-stat-value">{loading ? "…" : campaignStats.completedCampaigns || 0}</div>
+              <div className="org-stat-label">Completed Campaigns</div>
+            </div>
+
+            <div className="org-stat-card">
+              <div className="org-stat-accent" style={{ background: "linear-gradient(90deg, #ec4899, #f472b6)" }} />
+              <div className="org-stat-top">
+                <div className="org-stat-icon" style={{ background: "#fce7f3", color: "#db2777" }}>🎁</div>
+              </div>
+              <div className="org-stat-value">{loading ? "…" : campaignStats.totalDonationsReceived || 0}</div>
+              <div className="org-stat-label">Total Donations Received</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="org-card" style={{ marginBottom: 28 }}>
         <div className="org-card-header">
@@ -113,8 +184,20 @@ export default function OrgHome() {
             id="org-quick-post"
             onClick={() => navigate("/organization/create-requirement")}
           >
-            ➕ Post New Requirement
+            ➕ Post Requirement
           </button>
+
+          {isCampaignEligible && (
+            <button
+              className="org-btn-primary"
+              id="org-quick-create-campaign"
+              onClick={() => navigate("/organization/create-campaign")}
+              style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+            >
+              🚀 Create Campaign
+            </button>
+          )}
+
           <button
             className="org-btn-secondary"
             id="org-quick-incoming"

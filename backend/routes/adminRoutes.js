@@ -20,4 +20,8 @@ router.put("/volunteer/:id/reject", adminController.rejectVolunteer);
 
 router.put("/organizations/:id/reject", adminController.rejectOrganization);
 
+router.get("/settings", adminController.getSettings);
+router.put("/settings", adminController.updateSettings);
+
 module.exports = router;
+

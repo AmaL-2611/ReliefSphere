@@ -93,7 +93,7 @@ exports.getMyDonations = async (req, res) => {
 
     const donations = await Donation.find({ donorId: donor._id })
       .populate("matchedRequirement", "title category urgency location")
-      .populate("matchedOrganization", "orgName orgType address")
+      .populate("matchedOrganization", "_id userId orgName orgType address")
       .sort({ createdAt: -1 });
 
     const stats = {
@@ -223,7 +223,8 @@ exports.createDirectDonation = async (req, res) => {
       image: imageUrl || "",
       matchedRequirement: requirement._id,
       matchedOrganization: orgId,
-      status: "pending", // Pending NGO Approval
+      status: "accepted",
+      acceptedAt: new Date(),
     });
 
     // Notify organization
@@ -231,15 +232,32 @@ exports.createDirectDonation = async (req, res) => {
       await createNotification(
         requirement.postedBy,
         "🎁 New Direct Donation Pledged!",
-        `A donor pledged ${quantity} ${unit || "units"} for your requirement "${requirement.title}".`,
+        `A donor pledged ${quantity} ${unit || "units"} for your requirement "${requirement.title}". Admin will assign a volunteer for delivery.`,
         "donation",
         donation._id,
         "Donation"
       );
     }
 
+    // Notify Admins to assign a volunteer for pickup
+    try {
+      const admins = await User.find({ role: "admin" }).select("_id");
+      for (const admin of admins) {
+        await createNotification(
+          admin._id,
+          "📦 New Donation Pledged - Assign Volunteer",
+          `A donor pledged ${quantity} ${unit || "units"} for requirement "${requirement.title}". Please assign a volunteer for pickup.`,
+          "donation",
+          donation._id,
+          "Donation"
+        );
+      }
+    } catch (notifErr) {
+      console.error("Admin notification error:", notifErr.message);
+    }
+
     res.status(201).json({
-      message: "Pledge submitted successfully. Awaiting NGO approval.",
+      message: "Pledge submitted successfully. Awaiting volunteer pickup assignment by Admin.",
       donation,
     });
   } catch (err) {
@@ -263,18 +281,6 @@ exports.acceptDonation = async (req, res) => {
     donation.status = "accepted";
     donation.acceptedAt = new Date();
     await donation.save();
-
-    // If linked to requirement, update requirement fulfillment progress
-    if (donation.matchedRequirement) {
-      const reqDoc = await Requirement.findById(donation.matchedRequirement._id);
-      if (reqDoc) {
-        reqDoc.receivedQuantity = (reqDoc.receivedQuantity || 0) + donation.quantity;
-        if (reqDoc.receivedQuantity >= reqDoc.quantity) {
-          reqDoc.status = "fulfilled";
-        }
-        await reqDoc.save();
-      }
-    }
 
     const orgName = donation.matchedOrganization?.orgName || "Hope Foundation";
 
