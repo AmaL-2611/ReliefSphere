@@ -7,14 +7,12 @@ const BACKEND_URL = "http://localhost:5000";
 
 const STAGE_DEFS = [
   { key: "created",   label: "Donation Created",    icon: "📦" },
-  { key: "matched",   label: "NGO Matched by AI",   icon: "🤖" },
+  { key: "matched",   label: "NGO Matched",         icon: "🤝" },
   { key: "accepted",  label: "NGO Accepted",         icon: "✅" },
   { key: "assigned",  label: "Volunteer Assigned",   icon: "🚗" },
   { key: "picked_up", label: "Picked Up",            icon: "📬" },
   { key: "delivered", label: "Delivered",            icon: "🎉" },
 ];
-
-const STATUS_ORDER = ["pending", "matched", "accepted", "assigned", "picked_up", "delivered", "cancelled"];
 
 function getCompletedStages(status) {
   const statusToStageIndex = {
@@ -181,7 +179,6 @@ export default function TrackDonation() {
                 const isActive = idx === completedIdx && donation.status !== "delivered";
                 const isPending = idx > completedIdx;
 
-                // Get date for stage
                 let date = null;
                 if (idx === 0) date = donation.createdAt;
                 if (idx === 2) date = donation.acceptedAt;
@@ -218,11 +215,11 @@ export default function TrackDonation() {
 
           {/* ── Right Panel ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {/* AI Match Info */}
+            {/* Organization Match Info */}
             {donation.matchedOrganization && (
               <div className="timeline-card">
                 <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>
-                  🤖 AI Match Details
+                  📦 Matched Organization Details
                 </h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                   {[
@@ -230,15 +227,10 @@ export default function TrackDonation() {
                     { label: "NGO Address", value: donation.matchedOrganization.address },
                     { label: "Requirement", value: donation.matchedRequirement?.title || "—" },
                     { label: "Urgency", value: donation.matchedRequirement?.urgency || "—" },
-                    {
-                      label: "Match Score",
-                      value: donation.matchScore != null ? `${donation.matchScore}%` : "—",
-                      highlight: true,
-                    },
                   ].map((item) => (
                     <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e2e8f0" }}>
                       <span style={{ fontSize: 13, color: "#64748b" }}>{item.label}</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: item.highlight ? "#10b981" : "#1e293b", textTransform: "capitalize" }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#1e293b", textTransform: "capitalize" }}>
                         {item.value}
                       </span>
                     </div>
@@ -246,6 +238,56 @@ export default function TrackDonation() {
                 </div>
               </div>
             )}
+
+            {/* 80G PDF Receipt Download Card */}
+            <div className="timeline-card" style={{ background: "linear-gradient(135deg, #ecfdf5, #f0fdf4)", border: "1px solid #a7f3d0" }}>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: "#065f46", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                📜 80G Tax Receipt & Certificate
+              </h3>
+              <p style={{ fontSize: 12.5, color: "#047857", marginBottom: 14, lineHeight: 1.5 }}>
+                Official tax exemption certificate registered under Section 80G of Income Tax Act 1961.
+              </p>
+              <button
+                style={{
+                  width: "100%",
+                  padding: "10px 16px",
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, #059669, #10b981)",
+                  color: "white",
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(5,150,105,0.25)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem("token");
+                    const response = await fetch(`http://localhost:5000/api/donations/${donation._id}/receipt`, {
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (!response.ok) throw new Error("Failed to download receipt.");
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `ReliefSphere_Receipt_${donation._id.slice(-6)}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    toast.success("📄 80G Tax Exemption Certificate downloaded!");
+                  } catch (err) {
+                    toast.error("Failed to download receipt PDF.");
+                  }
+                }}
+              >
+                📥 Download Receipt PDF
+              </button>
+            </div>
 
             {/* Volunteer & Delivery Info */}
             {delivery && (

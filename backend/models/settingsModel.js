@@ -2,11 +2,7 @@ const mongoose = require("mongoose");
 
 const settingsSchema = new mongoose.Schema(
   {
-    aiWeights: {
-      categoryMatch: { type: Number, default: 40, min: 0, max: 100 },
-      quantityRatio: { type: Number, default: 25, min: 0, max: 100 },
-      urgency: { type: Number, default: 20, min: 0, max: 100 },
-      proximity: { type: Number, default: 15, min: 0, max: 100 },
+    matchingRules: {
       minMatchThreshold: { type: Number, default: 40, min: 0, max: 100 },
     },
     distanceThresholds: {
@@ -21,7 +17,7 @@ const settingsSchema = new mongoose.Schema(
       autoAssignVolunteer: { type: Boolean, default: true },
     },
     system: {
-      platformName: { type: String, default: "ReliefSphere AI" },
+      platformName: { type: String, default: "ReliefSphere" },
       supportEmail: { type: String, default: "support@reliefsphere.org" },
       maintenanceMode: { type: Boolean, default: false },
     },

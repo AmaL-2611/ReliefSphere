@@ -7,7 +7,7 @@ async function geocodeAddress(address) {
       "https://nominatim.openstreetmap.org/search",
       {
         params: { q: address, format: "json", limit: 1 },
-        headers: { "User-Agent": "ReliefSphereAI/1.0" },
+        headers: { "User-Agent": "ReliefSphere/1.0" },
       },
     );
 

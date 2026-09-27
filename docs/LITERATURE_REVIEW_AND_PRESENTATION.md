@@ -18,7 +18,7 @@ The design and mathematical modeling of ReliefSphere are derived from key publis
    * **Key Takeaway:** High and critical urgency requirements must receive mathematical priority multipliers to prevent supply deprivation in acute crisis areas.
 
 ## 1.2 Tool Implementation Rationale (Review Paper Integration)
-In ReliefSphere (`backend/utils/aiMatcher.js`), we synthesized these papers into a **Weighted 100-Point Multi-Factor Matching Algorithm**:
+In ReliefSphere (`backend/utils/resourceMatcher.js`), we synthesized these papers into a **Weighted 100-Point Multi-Factor Matching Algorithm**:
 
 $$\text{Total Match Score} = S_{\text{category}} + S_{\text{quantity}} + S_{\text{urgency}} + S_{\text{distance}}$$
 
@@ -48,7 +48,7 @@ To satisfy the **compulsory 60% completion rule** for Mini Project 2, here is th
 | **Authentication & Role-Based Security** (JWT, Password Hashing, Google Auth) | 15% | Completed ✅ | 15% |
 | **Donor Module** (Post donation, upload photos, location coordinates) | 15% | Completed ✅ | 15% |
 | **Recipient Org Module** (Post requirements, set urgency, location) | 15% | Completed ✅ | 15% |
-| **AI Matching Engine** (4-factor scoring algorithm in `aiMatcher.js`) | 20% | Completed ✅ | 20% |
+| **Resource Matching Engine** (4-factor scoring algorithm in `resourceMatcher.js`) | 20% | Completed ✅ | 20% |
 | **Admin Verification Pipeline** (Approve/Reject Volunteers & Orgs, document review) | 15% | Completed ✅ | 15% |
 | **Logistics & Volunteer Dispatch** (Delivery assignment, Proof of Delivery uploads) | 10% | Completed ✅ | 10% |
 | **Notification Engine** (In-app alerts on state transitions) | 10% | Completed ✅ | 10% |

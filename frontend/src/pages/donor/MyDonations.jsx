@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import ChatModal from "../../components/chat/ChatModal";
 
 const STATUS_MAP = {
-  pending: { label: "Pending NGO Approval ⏳", bg: "#fef3c7", color: "#92400e" },
+  pending: { label: "Pending Admin Review ⏳", bg: "#fef3c7", color: "#92400e" },
   matched: { label: "Matched 🎯", bg: "#e0f2fe", color: "#0369a1" },
   accepted: { label: "Accepted 🟢", bg: "#dcfce7", color: "#15803d" },
   rejected: { label: "Rejected 🔴", bg: "#fee2e2", color: "#991b1b" },
@@ -37,7 +37,6 @@ function StatusBadge({ status }) {
 export default function MyDonations() {
   const navigate = useNavigate();
   const [donations, setDonations] = useState([]);
-  const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -61,7 +60,6 @@ export default function MyDonations() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDonations(res.data.donations || []);
-      setStats(res.data.stats || {});
     } catch (err) {
       toast.error("Failed to load donations.");
     } finally {
@@ -127,6 +125,37 @@ export default function MyDonations() {
           </button>
         </div>
 
+        {/* Filter Status Pills */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+          {[
+            { id: "all", label: "All Donations" },
+            { id: "pending", label: "Pending" },
+            { id: "matched", label: "Matched" },
+            { id: "accepted", label: "Accepted" },
+            { id: "delivered", label: "Delivered" },
+            { id: "cancelled", label: "Cancelled" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilterStatus(tab.id)}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 999,
+                border: "1px solid",
+                borderColor: filterStatus === tab.id ? "#059669" : "#cbd5e1",
+                background: filterStatus === tab.id ? "#ecfdf5" : "#ffffff",
+                color: filterStatus === tab.id ? "#047857" : "#64748b",
+                fontWeight: filterStatus === tab.id ? 700 : 500,
+                fontSize: 13,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Donations Table */}
         <div style={{ background: "white", borderRadius: 16, padding: 20, border: "1px solid #e2e8f0", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
           {loading ? (
@@ -174,6 +203,41 @@ export default function MyDonations() {
                           onClick={() => navigate(`/donor/track-donation?id=${d._id}`)}
                         >
                           👁 Track
+                        </button>
+
+                        <button
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: 8,
+                            border: "1px solid #059669",
+                            background: "#ecfdf5",
+                            color: "#047857",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                          onClick={async () => {
+                            try {
+                              const token = localStorage.getItem("token");
+                              const response = await fetch(`http://localhost:5000/api/donations/${d._id}/receipt`, {
+                                headers: { Authorization: `Bearer ${token}` },
+                              });
+                              if (!response.ok) throw new Error("Failed to download receipt.");
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `ReliefSphere_Receipt_${d._id.slice(-6)}.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              toast.success("📄 80G Tax Exemption Receipt downloaded!");
+                            } catch (err) {
+                              toast.error("Failed to download receipt PDF.");
+                            }
+                          }}
+                        >
+                          📄 80G Receipt
                         </button>
 
                         <button

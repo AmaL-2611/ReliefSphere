@@ -3,7 +3,7 @@ const RecipientOrganization = require("../models/RecipientOrganization");
 const Donation = require("../models/donationModel");
 const Donor = require("../models/donorModel");
 const User = require("../models/userModel");
-const { createNotification } = require("../utils/aiMatcher");
+const { createNotification } = require("../utils/resourceMatcher");
 
 /* ─── CREATE HUMANITARIAN CAMPAIGN (Community Shelter ONLY) ─── */
 exports.createCampaign = async (req, res) => {

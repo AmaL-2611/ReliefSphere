@@ -150,7 +150,7 @@ export default function DonorDonateRequirement() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      toast.success("🎁 Pledge submitted! Pending NGO approval.");
+      toast.success("🎁 Pledge submitted! Pending Admin review & volunteer assignment.");
       setTimeout(() => navigate("/donor/my-donations"), 1500);
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || "Failed to submit pledge.");

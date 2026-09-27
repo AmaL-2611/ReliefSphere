@@ -1,7 +1,7 @@
 const Message = require("../models/chatModel");
 const User = require("../models/userModel");
 const Donation = require("../models/donationModel");
-const { createNotification } = require("../utils/aiMatcher");
+const { createNotification } = require("../utils/resourceMatcher");
 
 /* ─── Send Message ─── */
 exports.sendMessage = async (req, res) => {

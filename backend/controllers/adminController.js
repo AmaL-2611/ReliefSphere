@@ -401,7 +401,7 @@ exports.rejectOrganization = async (req, res) => {
 
       Regards,<br>
 
-      ReliefSphere AI Team
+      ReliefSphere Team
       `,
     );
 
@@ -441,7 +441,7 @@ exports.updateSettings = async (req, res) => {
     if (!settings) {
       settings = new Settings(req.body);
     } else {
-      if (req.body.aiWeights) settings.aiWeights = { ...settings.aiWeights, ...req.body.aiWeights };
+      if (req.body.matchingRules) settings.matchingRules = { ...settings.matchingRules, ...req.body.matchingRules };
       if (req.body.distanceThresholds) settings.distanceThresholds = { ...settings.distanceThresholds, ...req.body.distanceThresholds };
       if (req.body.notifications) settings.notifications = { ...settings.notifications, ...req.body.notifications };
       if (req.body.system) settings.system = { ...settings.system, ...req.body.system };

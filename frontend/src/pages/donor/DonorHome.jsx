@@ -54,7 +54,7 @@ export default function DonorHome() {
       <div className="page-header">
         <h1 className="page-title">Welcome back, {donorName.split(" ")[0]} 👋</h1>
         <p className="page-subtitle">
-          Here's your live donation activity on ReliefSphere AI.
+          Here's your live donation activity on ReliefSphere.
         </p>
       </div>
 
@@ -94,7 +94,7 @@ export default function DonorHome() {
           gradientStart="#8b5cf6"
           gradientEnd="#a78bfa"
           iconBg="#ede9fe"
-          trend="Awaiting AI"
+          trend="Awaiting match"
         />
       </div>
 

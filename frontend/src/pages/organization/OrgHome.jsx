@@ -102,7 +102,7 @@ export default function OrgHome() {
             <div className="org-stat-icon" style={{ background: "#fef3c7", color: "#d97706" }}>🎁</div>
           </div>
           <div className="org-stat-value">{loading ? "…" : incomingCount}</div>
-          <div className="org-stat-label">Incoming AI Matches</div>
+          <div className="org-stat-label">Incoming Matched Allocations</div>
         </div>
 
         <div className="org-stat-card">

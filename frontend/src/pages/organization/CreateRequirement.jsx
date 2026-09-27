@@ -796,10 +796,10 @@ export default function CreateRequirement() {
               </div>
               <div>
                 <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#0369a1" }}>
-                  AI Matching Insight
+                  Resource Matching Tip
                 </h4>
                 <p style={{ margin: "4px 0 0 0", fontSize: 13, color: "#0c4a6e", lineHeight: 1.5 }}>
-                  Requirements with complete beneficiary details, location information, and supporting evidence receive donations faster and achieve higher matching accuracy.
+                  Requirements with complete beneficiary details, location information, and supporting evidence receive donations faster.
                 </p>
               </div>
             </div>

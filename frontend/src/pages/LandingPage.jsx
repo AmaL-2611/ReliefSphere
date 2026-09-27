@@ -71,8 +71,8 @@ export default function LandingPage() {
 
   const faqData = [
     {
-      q: "How does the AI Matching Algorithm work?",
-      a: "ReliefSphere AI evaluates urgency metrics, perishability, geographical distance, real-time NGO capacity, and historical demand to pair donors with the most effective nearby NGO instantly."
+      q: "How does the Resource Matching Algorithm work?",
+      a: "ReliefSphere evaluates urgency metrics, perishability, geographical distance, real-time NGO capacity, and requirement quantity to pair donors with the most effective nearby NGO instantly."
     },
     {
       q: "How are NGOs and Organizations verified?",
@@ -208,7 +208,7 @@ export default function LandingPage() {
           <div className="hero-badge">
             <span className="pulse-dot"></span>
             <HiSparkles className="badge-icon" />
-            <span>AI-Powered Relief Ecosystem</span>
+            <span>Smart Relief Ecosystem</span>
           </div>
 
           <h1>
@@ -216,7 +216,7 @@ export default function LandingPage() {
           </h1>
 
           <p>
-            ReliefSphere AI dynamically connects donors, verified NGOs, and
+            ReliefSphere dynamically connects donors, verified NGOs, and
             active volunteers through automated matching, real-time logistics
             tracking, and transparent proof-of-delivery.
           </p>
@@ -245,7 +245,7 @@ export default function LandingPage() {
             <div className="stat-divider"></div>
             <div className="stat-box">
               <h2>98.4%</h2>
-              <p>AI Match Accuracy</p>
+              <p>Match Accuracy</p>
             </div>
           </div>
         </div>
@@ -365,7 +365,7 @@ export default function LandingPage() {
           </span>
           <h2>Unified Visibility for Every Stakeholder</h2>
           <p>
-            Experience how ReliefSphere provides real-time tracking, AI matching, and analytics tailored to your role.
+            Experience how ReliefSphere provides real-time tracking, automated matching, and analytics tailored to your role.
           </p>
         </div>
 
@@ -423,7 +423,7 @@ export default function LandingPage() {
               <div className="sidebar-menu">
                 <div className="sidebar-item active">Overview</div>
                 <div className="sidebar-item">Active Orders</div>
-                <div className="sidebar-item">AI Match Feed</div>
+                <div className="sidebar-item">Match Feed</div>
                 <div className="sidebar-item">Logistics Map</div>
                 <div className="sidebar-item">Impact Reports</div>
                 <div className="sidebar-item">Settings</div>
@@ -437,7 +437,7 @@ export default function LandingPage() {
                   <div className="view-header">
                     <div>
                       <h3>Donor Portal Overview</h3>
-                      <p>Track your active contributions and live AI matches.</p>
+                      <p>Track your active contributions and live resource matches.</p>
                     </div>
                     <Link to="/signup" className="mini-cta">
                       + Create New Donation
@@ -497,7 +497,7 @@ export default function LandingPage() {
                         <li>
                           <FaBrain className="icon-purple" />
                           <div>
-                            <strong>AI Match Found</strong>
+                            <strong>Match Found</strong>
                             <span>Medicines matched to Red Cross Regional</span>
                           </div>
                         </li>
@@ -818,7 +818,7 @@ export default function LandingPage() {
             <p>Easily post excess food, supplies, or financial aid and watch your contribution make a direct impact.</p>
             <ul>
               <li><FaCheck /> Quick 1-Minute Donation Listing</li>
-              <li><FaCheck /> AI Match Recommendations</li>
+              <li><FaCheck /> Match Recommendations</li>
               <li><FaCheck /> Real-Time Live Delivery Map</li>
               <li><FaCheck /> Automated ESG Tax Certificates</li>
             </ul>
@@ -835,7 +835,7 @@ export default function LandingPage() {
             <h3>Organization Hub</h3>
             <p>Receive pre-vetted donation matches, manage local inventory, and request emergency supplies seamlessly.</p>
             <ul>
-              <li><FaCheck /> Automated AI Match Alerts</li>
+              <li><FaCheck /> Automated Match Alerts</li>
               <li><FaCheck /> Inventory & Distribution Control</li>
               <li><FaCheck /> Direct Volunteer Dispatching</li>
               <li><FaCheck /> Verified Audit Credentials</li>
@@ -924,7 +924,7 @@ export default function LandingPage() {
               <span>ReliefSphere</span>
             </div>
             <p>
-              Smart Humanitarian AI Ecosystem transforming surplus resources into immediate lifesaving support through transparency and technology.
+              Smart Humanitarian Ecosystem transforming surplus resources into immediate lifesaving support through transparency and technology.
             </p>
             <div className="footer-contact-info">
               <div><FaPhone /> 24/7 Crisis Dispatch: +1 (800) 555-RELIEF</div>
@@ -960,7 +960,7 @@ export default function LandingPage() {
             <h4>Safety & Compliance</h4>
             <ul>
               <li><a href="#faq">NGO Verification Standard</a></li>
-              <li><a href="#faq">AI Matching Whitepaper</a></li>
+              <li><a href="#faq">Resource Matching Documentation</a></li>
               <li><a href="#faq">Food Safety Protocol</a></li>
               <li><a href="#faq">Privacy Policy</a></li>
               <li><a href="#faq">Terms of Service</a></li>
@@ -972,7 +972,7 @@ export default function LandingPage() {
           <p>© {new Date().getFullYear()} ReliefSphere Platform. All rights reserved.</p>
           <div className="footer-badge-row">
             <span className="footer-pill"><HiShieldCheck /> 100% Verified Non-Profit Network</span>
-            <span className="footer-pill"><FaBrain /> AI-Optimized Logistics</span>
+            <span className="footer-pill"><FaBrain /> Optimized Logistics Engine</span>
           </div>
         </div>
       </footer>

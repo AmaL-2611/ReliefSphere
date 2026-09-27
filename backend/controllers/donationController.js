@@ -3,8 +3,9 @@ const Donor = require("../models/donorModel");
 const Requirement = require("../models/requirementModel");
 const Delivery = require("../models/deliveryModel");
 const User = require("../models/userModel");
-const { matchDonationToRequirements, createNotification } = require("../utils/aiMatcher");
+const { matchDonationToRequirements, createNotification } = require("../utils/resourceMatcher");
 const upload = require("../middleware/upload");
+const { generateDonationReceiptPDF } = require("../utils/pdfGenerator");
 
 /* ─── Create Donation (Donor) ─── */
 exports.createDonation = async (req, res) => {
@@ -30,14 +31,13 @@ exports.createDonation = async (req, res) => {
       image: imagePath,
     });
 
-    // ── Run AI Matching Engine ──
+    // ── Standard Resource Matching ──
     const { bestMatch, topMatches } = await matchDonationToRequirements(donation);
 
-    if (bestMatch && bestMatch.score >= 40) {
+    if (bestMatch) {
       // Update donation with best match
       donation.matchedRequirement = bestMatch.requirementId;
       donation.matchedOrganization = bestMatch.organizationId;
-      donation.matchScore = bestMatch.score;
       donation.status = "matched";
       await donation.save();
 
@@ -48,13 +48,12 @@ exports.createDonation = async (req, res) => {
       });
 
       // Notify the organization
-      const orgUser = await User.findOne({ _id: { $exists: true } }).populate("_id");
       const req_doc = await Requirement.findById(bestMatch.requirementId).populate("postedBy");
       if (req_doc?.postedBy?._id) {
         await createNotification(
           req_doc.postedBy._id,
           "🎁 New Donation Matched!",
-          `A donation of ${quantity} ${category} has been matched to your requirement "${bestMatch.title}". Match score: ${bestMatch.score}%.`,
+          `A donation of ${quantity} ${category} has been matched to your requirement "${bestMatch.title}".`,
           "match",
           donation._id,
           "Donation"
@@ -64,7 +63,7 @@ exports.createDonation = async (req, res) => {
       return res.status(201).json({
         message: "Donation submitted and matched!",
         donation,
-        aiMatch: {
+        matchResult: {
           matched: true,
           bestMatch,
           topMatches,
@@ -72,13 +71,13 @@ exports.createDonation = async (req, res) => {
       });
     }
 
-    // No strong match found — donation stays pending
+    // No direct match found — donation stays pending
     await donation.save();
 
     res.status(201).json({
-      message: "Donation submitted. AI will match when a suitable requirement is posted.",
+      message: "Donation submitted successfully. Awaiting Admin review and volunteer assignment.",
       donation,
-      aiMatch: { matched: false, bestMatch: null, topMatches },
+      matchResult: { matched: false, bestMatch: null, topMatches: [] },
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -129,6 +128,24 @@ exports.getDonationById = async (req, res) => {
     res.json({ donation, delivery: delivery || null });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+/* ─── Download PDF Donation & Tax Exemption Receipt ─── */
+exports.downloadReceipt = async (req, res) => {
+  try {
+    const donation = await Donation.findById(req.params.id)
+      .populate({ path: "donorId", populate: { path: "userId", select: "fullName email" } })
+      .populate("postedBy", "fullName email")
+      .populate("matchedRequirement", "title category urgency location description")
+      .populate("matchedOrganization", "orgName orgType address");
+
+    if (!donation) return res.status(404).json({ message: "Donation not found." });
+
+    generateDonationReceiptPDF(donation, res);
+  } catch (err) {
+    console.error("Receipt generation error:", err.message);
+    res.status(500).json({ message: "Failed to generate receipt PDF." });
   }
 };
 
@@ -364,8 +381,8 @@ exports.getAllDonations = async (req, res) => {
   }
 };
 
-/* ─── Admin: Re-run AI Match for a Donation ─── */
-exports.runAIMatch = async (req, res) => {
+/* ─── Admin: Re-run Match for a Donation ─── */
+exports.runMatch = async (req, res) => {
   try {
     const donation = await Donation.findById(req.params.id);
     if (!donation) return res.status(404).json({ message: "Donation not found." });
@@ -375,7 +392,7 @@ exports.runAIMatch = async (req, res) => {
 
     const { bestMatch, topMatches } = await matchDonationToRequirements(donation);
 
-    if (bestMatch && bestMatch.score >= 40) {
+    if (bestMatch) {
       // Revert old match if any
       if (donation.matchedRequirement) {
         await Requirement.findByIdAndUpdate(donation.matchedRequirement, {
@@ -386,7 +403,6 @@ exports.runAIMatch = async (req, res) => {
 
       donation.matchedRequirement = bestMatch.requirementId;
       donation.matchedOrganization = bestMatch.organizationId;
-      donation.matchScore = bestMatch.score;
       donation.status = "matched";
       await donation.save();
 
@@ -395,10 +411,10 @@ exports.runAIMatch = async (req, res) => {
         matchedDonation: donation._id,
       });
 
-      return res.json({ message: "AI match found.", bestMatch, topMatches, donation });
+      return res.json({ message: "Matching requirement found.", bestMatch, topMatches, donation });
     }
 
-    res.json({ message: "No suitable match found yet.", bestMatch: null, topMatches, donation });
+    res.json({ message: "No matching requirement found yet.", bestMatch: null, topMatches, donation });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

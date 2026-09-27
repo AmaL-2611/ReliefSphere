@@ -19,7 +19,7 @@ async function sendEmail(to, subject, html) {
   });
 
   await transporter.sendMail({
-    from: `ReliefSphere AI <${process.env.EMAIL_USER}>`,
+    from: `ReliefSphere <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html,

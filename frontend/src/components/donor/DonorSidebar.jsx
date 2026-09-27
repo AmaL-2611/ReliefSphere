@@ -103,7 +103,7 @@ export default function DonorSidebar() {
         <div className="ds-brand-icon">🌍</div>
         <div>
           <div className="ds-brand-text">ReliefSphere</div>
-          <div className="ds-brand-sub">AI Platform</div>
+          <div className="ds-brand-sub">Donor Portal</div>
         </div>
       </div>
 

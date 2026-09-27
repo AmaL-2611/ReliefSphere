@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   BarChart,
   Bar,
@@ -13,7 +13,6 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import API from "../../api/axios";
 
 const MONTHLY_DATA = [
   { month: "Jan", donations: 42, requirements: 38, delivered: 35 },
@@ -40,8 +39,6 @@ const SUCCESS_RATE_DATA = [
 ];
 
 export default function Analytics() {
-  const [loading, setLoading] = useState(false);
-
   return (
     <div style={{ padding: "8px 0" }}>
       <div style={{ marginBottom: 28 }}>
@@ -60,7 +57,7 @@ export default function Analytics() {
         </div>
 
         <div style={{ background: "white", borderRadius: 16, padding: 22, border: "1px solid #e2e8f0", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>AI Match Accuracy</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Match Accuracy</div>
           <div style={{ fontSize: 32, fontWeight: 800, color: "#0891b2", marginTop: 4 }}>91.4%</div>
           <div style={{ fontSize: 12, color: "#0891b2", marginTop: 4, fontWeight: 600 }}>Weighted multi-factor score</div>
         </div>

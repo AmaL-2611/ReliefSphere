@@ -150,13 +150,13 @@ export default function CreateDonation() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const { aiMatch } = res.data;
-      setAiResult(aiMatch);
+      const matchInfo = res.data.matchResult || res.data.aiMatch;
+      setAiResult(matchInfo);
 
-      if (aiMatch?.matched) {
-        toast.success(`🎯 AI Matched! ${aiMatch.bestMatch.matchScore}% match with ${aiMatch.bestMatch.organizationName}`);
+      if (matchInfo?.matched) {
+        toast.success(`🎯 Matched! Linked with ${matchInfo.bestMatch.organizationName}`);
       } else {
-        toast.success("✅ Donation submitted! AI will match when an NGO requirement is posted.");
+        toast.success("✅ Donation submitted successfully!");
       }
 
       setTimeout(() => navigate("/donor/my-donations"), 2500);
@@ -177,7 +177,7 @@ export default function CreateDonation() {
           Pledge & Create Donation
         </h1>
         <p style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>
-          Submit relief items — our AI engine will automatically match them to the highest priority NGO requirements.
+          Submit relief items — our system will match them to priority NGO requirements.
         </p>
       </div>
 
@@ -203,7 +203,7 @@ export default function CreateDonation() {
         <div style={{ background: "#ffffff", borderRadius: 16, padding: "20px 22px", borderLeft: "5px solid #0284c7", border: "1px solid #e2e8f0", boxShadow: "0 4px 16px rgba(15,23,42,0.04)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5 }}>AI Matched</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: 0.5 }}>Matched</span>
               <div style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", marginTop: 4 }}>{stats.matched}</div>
             </div>
             <div style={{ width: 44, height: 44, borderRadius: 12, background: "#e0f2fe", fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center" }}>🎯</div>
@@ -231,7 +231,7 @@ export default function CreateDonation() {
         </div>
       </div>
 
-      {/* AI Match Result Banner */}
+      {/* Match Result Banner */}
       {aiResult && (
         <div
           style={{
@@ -250,13 +250,13 @@ export default function CreateDonation() {
           <div>
             <div style={{ fontWeight: 800, fontSize: 16 }}>
               {aiResult.matched
-                ? `AI Match Found — ${aiResult.bestMatch.matchScore}% compatibility!`
-                : "Donation Submitted — Pending AI Match"}
+                ? `Match Found!`
+                : "Donation Submitted — Pending Match"}
             </div>
             <div style={{ fontSize: 13, opacity: 0.9, marginTop: 3 }}>
               {aiResult.matched
                 ? `Matched to "${aiResult.bestMatch.title}" at ${aiResult.bestMatch.organizationName} · ${aiResult.bestMatch.distanceKm}km away`
-                : "AI will automatically match your donation when an NGO posts a corresponding requirement."}
+                : "Your donation will be matched when an NGO posts a corresponding requirement."}
             </div>
           </div>
         </div>
@@ -545,13 +545,13 @@ export default function CreateDonation() {
                 marginBottom: 28,
               }}
             >
-              <div style={{ fontSize: 24 }}>🤖</div>
+              <div style={{ fontSize: 24 }}>🔄</div>
               <div>
                 <h4 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: "#047857" }}>
-                  AI Match Guarantee
+                  Smart Match Guarantee
                 </h4>
                 <p style={{ margin: "4px 0 0 0", fontSize: 13, color: "#065f46", lineHeight: 1.5 }}>
-                  Our AI engine automatically matches your donation against open verified NGO requirements based on urgency, category, quantity, and nearby geographic location.
+                  Our multi-criteria engine automatically matches your donation against open verified NGO requirements based on urgency, category, quantity, and nearby geographic location.
                 </p>
               </div>
             </div>
@@ -565,7 +565,7 @@ export default function CreateDonation() {
                 disabled={submitting}
                 style={{ padding: "14px 28px", fontSize: 15, borderRadius: 14, background: "linear-gradient(135deg, #059669, #10b981)" }}
               >
-                {submitting ? "🤖 AI Matching & Submitting…" : "🚀 Submit & Match Donation"}
+                {submitting ? "🔄 Matching & Submitting…" : "🚀 Submit & Match Donation"}
               </button>
               <button
                 type="button"

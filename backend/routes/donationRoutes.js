@@ -15,12 +15,13 @@ router.post("/:id/accept", protect, donationController.acceptDonation);
 router.post("/:id/reject", protect, donationController.rejectDonation);
 
 // General & Parameter routes
+router.get("/:id/receipt", protect, donationController.downloadReceipt);
 router.get("/:id", protect, donationController.getDonationById);
 router.delete("/:id", protect, donationController.deleteDonation);
 router.patch("/:id/cancel", protect, donationController.cancelDonation);
 
 // Admin routes
 router.get("/admin/all", protect, adminOnly, donationController.getAllDonations);
-router.post("/admin/:id/rematch", protect, adminOnly, donationController.runAIMatch);
+router.post("/admin/:id/rematch", protect, adminOnly, donationController.runMatch);
 
 module.exports = router;

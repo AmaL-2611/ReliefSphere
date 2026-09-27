@@ -5,7 +5,7 @@ import ChatModal from "../../components/chat/ChatModal";
 
 const STATUS_BADGES = {
   pending: { label: "⏳ Pending Approval", bg: "#fef3c7", color: "#92400e" },
-  matched: { label: "🎯 AI Matched", bg: "#e0f2fe", color: "#0369a1" },
+  matched: { label: "🎯 Matched", bg: "#e0f2fe", color: "#0369a1" },
   accepted: { label: "🟢 Accepted (Awaiting Volunteer)", bg: "#dcfce7", color: "#15803d" },
   rejected: { label: "❌ Rejected", bg: "#fee2e2", color: "#991b1b" },
   assigned: { label: "🚚 Volunteer Assigned", bg: "#fef9c3", color: "#a16207" },

@@ -32,7 +32,7 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <h3>ReliefSphere AI</h3>
+        <h3>ReliefSphere</h3>
       </div>
 
       <nav className="sidebar-menu">

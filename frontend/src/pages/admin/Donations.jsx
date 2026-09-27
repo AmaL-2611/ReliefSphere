@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 
 const STATUS_BADGES = {
   pending: { label: "Pending", bg: "#fff7ed", color: "#c2410c" },
-  matched: { label: "AI Matched", bg: "#fef3c7", color: "#b45309" },
+  matched: { label: "Matched", bg: "#fef3c7", color: "#b45309" },
   accepted: { label: "Accepted", bg: "#e0f2fe", color: "#0369a1" },
   assigned: { label: "Volunteer Assigned", bg: "#e0e7ff", color: "#4338ca" },
   picked_up: { label: "In Transit", bg: "#fef9c3", color: "#a16207" },
@@ -102,7 +102,7 @@ export default function Donations() {
       }
       fetchDonations();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to run AI match.");
+      toast.error(err.response?.data?.message || "Failed to run match.");
     }
   };
 
@@ -115,7 +115,7 @@ export default function Donations() {
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1e293b" }}>Donations Monitoring</h2>
         <p style={{ color: "#64748b", fontSize: 14 }}>
-          Track real-time donation flows, review AI matches, and assign volunteers for logistics.
+          Track real-time donation flows, review matches, and assign volunteers for logistics.
         </p>
       </div>
 
@@ -189,7 +189,6 @@ export default function Donations() {
                         {d.matchedOrganization?.orgName ? (
                           <div>
                             <div style={{ fontWeight: 600, color: "#0891b2" }}>{d.matchedOrganization.orgName}</div>
-                            {d.matchScore && <span style={{ fontSize: 11, color: "#059669", fontWeight: 700 }}>🎯 {d.matchScore}% Match</span>}
                           </div>
                         ) : (
                           <span style={{ color: "#94a3b8", fontSize: 12 }}>Unmatched</span>
@@ -243,7 +242,7 @@ export default function Donations() {
                               }}
                               onClick={() => handleRematch(d._id)}
                             >
-                              🤖 AI Match
+                              🔄 Re-match
                             </button>
                           )}
                         </div>

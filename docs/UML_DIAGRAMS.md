@@ -195,7 +195,7 @@ classDiagram
         +updateStatus()
     }
 
-    class AIMatcher {
+    class ResourceMatcher {
         +calculateMatchScore(donation, requirement)
         +haversineDistance(lat1, lon1, lat2, lon2)
         +matchDonationToRequirements(donation)
@@ -208,13 +208,13 @@ classDiagram
     RecipientOrganization "1" -- "*" Requirement
     Donation "1" -- "0..1" Delivery
     Volunteer "1" -- "*" Delivery
-    AIMatcher ..> Donation
-    AIMatcher ..> Requirement
+    ResourceMatcher ..> Donation
+    ResourceMatcher ..> Requirement
 ```
 
 ---
 
-## 4. Sequence Diagram: Donation Posting & Automated AI Matching
+## 4. Sequence Diagram: Donation Posting & Automated Resource Matching
 
 ```mermaid
 sequenceDiagram
@@ -222,7 +222,7 @@ sequenceDiagram
     actor Donor as Donor User
     participant FE as React Frontend
     participant BE as Express API Controller
-    participant Engine as AI Matching Engine (aiMatcher)
+    participant Engine as Resource Matching Engine (resourceMatcher)
     participant DB as MongoDB
     actor Org as Recipient Organization
 

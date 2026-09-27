@@ -5,7 +5,7 @@ const Requirement = require("../models/requirementModel");
 const Campaign = require("../models/campaignModel");
 const RecipientOrganization = require("../models/RecipientOrganization");
 const User = require("../models/userModel");
-const { createNotification } = require("../utils/aiMatcher");
+const { createNotification } = require("../utils/resourceMatcher");
 
 /* ─── Admin: Assign Volunteer to Donation ─── */
 exports.assignVolunteer = async (req, res) => {

@@ -733,7 +733,7 @@ export default function Signup() {
             <div className="auth-form-card">
               <h2>Account created successfully! ✓</h2>
               <p className="subtitle">
-                Welcome to ReliefSphere AI! Redirecting to home...
+                Welcome to ReliefSphere! Redirecting to home...
               </p>
               <Link
                 to="/"

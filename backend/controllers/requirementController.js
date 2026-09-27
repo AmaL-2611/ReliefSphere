@@ -1,6 +1,6 @@
 const Requirement = require("../models/requirementModel");
 const RecipientOrganization = require("../models/RecipientOrganization");
-const { createNotification } = require("../utils/aiMatcher");
+const { createNotification } = require("../utils/resourceMatcher");
 
 /* ─── Create Requirement ─── */
 exports.createRequirement = async (req, res) => {

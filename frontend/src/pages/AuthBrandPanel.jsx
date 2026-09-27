@@ -1,4 +1,4 @@
-﻿import "./Auth.css";
+import "./Auth.css";
 
 export default function AuthBrandPanel() {
   return (
@@ -28,7 +28,7 @@ export default function AuthBrandPanel() {
             <h1 className="hero-second">Reach Faster.</h1>
 
             <p>
-              ReliefSphere AI intelligently connects verified donors,
+              ReliefSphere connects verified donors,
               organizations and volunteers to ensure every donation reaches
               those who need it most.
             </p>
@@ -49,8 +49,8 @@ export default function AuthBrandPanel() {
             <div className="workflow-line"></div>
 
             <div className="workflow-item">
-              <div className="workflow-icon">🤖</div>
-              <span>AI Matching</span>
+              <div className="workflow-icon">🔄</div>
+              <span>Smart Matching</span>
             </div>
 
             <div className="workflow-line"></div>

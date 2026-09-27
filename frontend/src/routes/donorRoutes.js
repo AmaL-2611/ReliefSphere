@@ -1,6 +1,6 @@
 /**
  * donorRoutes.js
- * Centralized route config for the Donor section of ReliefSphere AI.
+ * Centralized route config for the Donor section of ReliefSphere.
  * Used for documentation / reference — the actual routes are registered in App.js.
  *
  * Route structure:

@@ -389,27 +389,6 @@ export default function BrowseRequirements() {
                     {req.urgency}
                   </span>
 
-                  {/* Top Left: AI Match Score Badge */}
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: 14,
-                      left: 14,
-                      padding: "5px 12px",
-                      borderRadius: 999,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      background: "rgba(15, 23, 42, 0.75)",
-                      backdropFilter: "blur(4px)",
-                      color: "#34d399",
-                      border: "1px solid rgba(52, 211, 153, 0.4)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    ✨ AI Match Score {aiScore}%
-                  </span>
 
                   {/* Image Bottom Overlay Info: NGO Name & Verification */}
                   <div style={{ position: "absolute", bottom: 12, left: 14, right: 14 }}>
@@ -675,10 +654,10 @@ export default function BrowseRequirements() {
                 <span style={{ fontSize: 24 }}>✨</span>
                 <div>
                   <div style={{ fontWeight: 800, color: "#047857", fontSize: 15 }}>
-                    AI Recommendation Score: {getAiScore(selectedReq)}%
+                    Verified Requirement Details
                   </div>
                   <div style={{ fontSize: 12, color: "#065f46", marginTop: 2 }}>
-                    Matches donor category preference • Nearby location • High urgency
+                    Verified recipient organization • Nearby location • Active priority
                   </div>
                 </div>
               </div>
