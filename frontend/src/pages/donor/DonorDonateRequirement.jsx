@@ -122,8 +122,16 @@ export default function DonorDonateRequirement() {
     }
   };
 
+  const now = new Date();
+  const deadline = requirement?.requiredBefore ? new Date(requirement.requiredBefore) : (requirement?.expiresAt ? new Date(requirement.expiresAt) : null);
+  const isRequirementExpired = Boolean(requirement && (requirement.status === "expired" || (deadline && deadline < now)));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isRequirementExpired) {
+      toast.error("This requirement has expired and can no longer accept donations.");
+      return;
+    }
     if (!form.quantity || Number(form.quantity) <= 0) {
       toast.error("Please enter a valid donation quantity.");
       return;
@@ -195,6 +203,18 @@ export default function DonorDonateRequirement() {
           Support a verified NGO by fulfilling this requirement directly.
         </p>
       </div>
+
+      {isRequirementExpired && (
+        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 16, padding: "16px 20px", marginBottom: 24, display: "flex", alignItems: "center", gap: 14, color: "#991b1b" }}>
+          <span style={{ fontSize: 24 }}>⌛</span>
+          <div>
+            <strong style={{ display: "block", fontSize: 15, fontWeight: 800 }}>This Requirement Has Expired</strong>
+            <span style={{ fontSize: 13, color: "#7f1d1d" }}>
+              The requested need date ({deadline ? deadline.toLocaleDateString("en-IN") : "Past"}) has expired. You can no longer pledge donations to this requirement.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Main Layout: Info & Form (Left) vs Summary Panel (Right) */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 28, alignItems: "start" }}>
@@ -471,21 +491,29 @@ export default function DonorDonateRequirement() {
               <div style={{ marginTop: 24, display: "flex", gap: 14 }}>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || isRequirementExpired}
                   style={{
                     flex: 1,
                     padding: "14px 0",
                     borderRadius: 14,
                     border: "none",
-                    background: "linear-gradient(135deg, #059669, #10b981)",
+                    background: isRequirementExpired
+                      ? "#94a3b8"
+                      : "linear-gradient(135deg, #059669, #10b981)",
                     color: "#ffffff",
                     fontWeight: 800,
                     fontSize: 15,
-                    cursor: "pointer",
-                    boxShadow: "0 4px 16px rgba(5,150,105,0.3)",
+                    cursor: isRequirementExpired ? "not-allowed" : "pointer",
+                    boxShadow: isRequirementExpired
+                      ? "none"
+                      : "0 4px 16px rgba(5,150,105,0.3)",
                   }}
                 >
-                  {submitting ? "Submitting Pledge…" : "🎁 Pledge Donation"}
+                  {submitting
+                    ? "Submitting Pledge…"
+                    : isRequirementExpired
+                    ? "⌛ Requirement Expired"
+                    : "🎁 Pledge Donation"}
                 </button>
                 <button
                   type="button"

@@ -8,6 +8,7 @@ const { protect, adminOnly } = require("../middleware/authMiddleware");
 
 router.use(protect);
 router.use(adminOnly);
+router.get("/stats", adminController.getDashboardStats);
 router.get("/volunteers", adminController.getVolunteers);
 router.get("/organizations", adminController.getOrganizations);
 router.get("/donors", adminController.getDonors);
@@ -24,4 +25,3 @@ router.get("/settings", adminController.getSettings);
 router.put("/settings", adminController.updateSettings);
 
 module.exports = router;
-

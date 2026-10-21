@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import MatchRecommendationModal from "../../components/common/MatchRecommendationModal";
+
 
 const CATEGORIES = [
   { id: "food", label: "Food", icon: "🍱", desc: "Meals, dry rations & cooked food" },
@@ -21,6 +23,15 @@ export default function CreateDonation() {
   const [registeredAddress, setRegisteredAddress] = useState("");
   const [aiResult, setAiResult] = useState(null);
 
+  // Smart Matching & AI Description States
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [createdDonation, setCreatedDonation] = useState(null);
+  const [allocating, setAllocating] = useState(false);
+  const [aiParsing, setAiParsing] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState(null);
+
+
   const [form, setForm] = useState({
     category: "food",
     donationName: "",
@@ -38,7 +49,7 @@ export default function CreateDonation() {
         const token = localStorage.getItem("token");
 
         // Fetch My Donations for Stats
-        const resDonations = await API.get("/donations/donor/my", {
+        const resDonations = await API.get("/donations/my", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const donList = resDonations.data.donations || [];
@@ -141,6 +152,7 @@ export default function CreateDonation() {
         category: form.category,
         donationName: form.donationName,
         quantity: Number(form.quantity),
+        unit: form.unit,
         pickupAddress: form.pickupAddress,
         description: form.description,
         imageUrl: form.imagePreview || "",
@@ -150,20 +162,88 @@ export default function CreateDonation() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      const recs = res.data.recommendations || [];
+      const newDonation = res.data.donation;
+      setCreatedDonation(newDonation);
+      setRecommendations(recs);
+
       const matchInfo = res.data.matchResult || res.data.aiMatch;
       setAiResult(matchInfo);
 
-      if (matchInfo?.matched) {
-        toast.success(`🎯 Matched! Linked with ${matchInfo.bestMatch.organizationName}`);
+      if (recs.length > 0) {
+        toast.success(`🎯 Donation saved! Found ${recs.length} matching verified requirements.`);
+        setShowMatchModal(true);
       } else {
         toast.success("✅ Donation submitted successfully!");
+        setTimeout(() => navigate("/donor/my-donations"), 2000);
       }
-
-      setTimeout(() => navigate("/donor/my-donations"), 2500);
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || "Failed to submit donation.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // AI Description Assistant Handlers
+  const handleAiParse = async () => {
+    if (!form.description || form.description.trim().length < 5) {
+      toast.info("Please enter a brief description first (e.g. '30 grocery kits containing rice, pulses, and oil for flood victims').");
+      return;
+    }
+    setAiParsing(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await API.post(
+        "/donations/ai-parse",
+        { description: form.description },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data.success && res.data.suggestions) {
+        setAiSuggestions(res.data.suggestions);
+        toast.success(
+          res.data.isAiPowered
+            ? "✨ AI (Gemini) extracted structured fields!"
+            : "✨ AI Assistant extracted structured fields from description!"
+        );
+      } else {
+        toast.error("Could not extract details from description.");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to parse description.");
+    } finally {
+      setAiParsing(false);
+    }
+  };
+
+  const handleApplyAiSuggestions = () => {
+    if (!aiSuggestions) return;
+    setForm((prev) => ({
+      ...prev,
+      category: aiSuggestions.category || prev.category,
+      donationName: aiSuggestions.donationName || prev.donationName,
+      quantity: aiSuggestions.quantity || prev.quantity,
+      unit: aiSuggestions.unit || prev.unit,
+    }));
+    toast.success("Applied AI extracted suggestions to form!");
+  };
+
+  const handleAllocateMatch = async (matchItem) => {
+    if (!createdDonation?._id) return;
+    setAllocating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await API.post(
+        `/donations/${createdDonation._id}/allocate`,
+        { requirementId: matchItem.requirementId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(res.data.message || "Donation matched and allocated successfully!");
+      setShowMatchModal(false);
+      navigate("/donor/my-donations");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to allocate donation.");
+    } finally {
+      setAllocating(false);
     }
   };
 
@@ -449,20 +529,98 @@ export default function CreateDonation() {
                   )}
                 </div>
 
-                {/* Description */}
+                {/* Description with AI Assistant */}
                 <div style={{ gridColumn: "1 / -1" }}>
-                  <label className="form-label" htmlFor="description">
-                    Item Condition & Special Instructions
-                  </label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <label className="form-label" htmlFor="description" style={{ margin: 0 }}>
+                      Item Condition & Special Instructions
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleAiParse}
+                      disabled={aiParsing}
+                      style={{
+                        background: "linear-gradient(135deg, #0284c7, #06b6d4)",
+                        color: "#ffffff",
+                        border: "none",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        padding: "5px 12px",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        boxShadow: "0 2px 8px rgba(2, 132, 199, 0.25)",
+                      }}
+                    >
+                      {aiParsing ? "✨ Analyzing…" : "✨ AI Smart Assist: Auto-Fill"}
+                    </button>
+                  </div>
                   <textarea
                     className="form-control"
                     id="description"
                     name="description"
-                    placeholder="Mention expiry dates, sizing, condition, or pickup instructions…"
+                    placeholder="e.g. 30 grocery kits containing rice, pulses, and cooking oil for flood-affected families…"
                     value={form.description}
                     onChange={handleChange}
                     rows={3}
                   />
+
+                  {/* AI Suggestions Card */}
+                  {aiSuggestions && (
+                    <div
+                      style={{
+                        marginTop: 12,
+                        padding: 16,
+                        borderRadius: 12,
+                        background: "#f0f9ff",
+                        border: "1px solid #bae6fd",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, color: "#0369a1", fontSize: 13 }}>
+                          <span>🤖 AI Extracted Details</span>
+                          <span style={{ fontSize: 11, background: "#e0f2fe", color: "#0284c7", padding: "1px 6px", borderRadius: 4 }}>
+                            {aiSuggestions.source === "rule-based-nlp-fallback" ? "NLP Classifier" : "AI Powered"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleApplyAiSuggestions}
+                          style={{
+                            background: "#0284c7",
+                            color: "white",
+                            border: "none",
+                            padding: "4px 12px",
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          ✔ Apply Suggestions
+                        </button>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8, fontSize: 12, color: "#334155" }}>
+                        <div><strong>Category:</strong> <span style={{ textTransform: "capitalize" }}>{aiSuggestions.category}</span></div>
+                        <div><strong>Title:</strong> {aiSuggestions.donationName}</div>
+                        <div><strong>Quantity:</strong> {aiSuggestions.quantity} {aiSuggestions.unit}</div>
+                        <div><strong>Urgency:</strong> <span style={{ textTransform: "capitalize" }}>{aiSuggestions.suggestedUrgency}</span></div>
+                        {aiSuggestions.items?.length > 0 && (
+                          <div style={{ gridColumn: "1 / -1" }}>
+                            <strong>Items detected:</strong> {aiSuggestions.items.join(", ")}
+                          </div>
+                        )}
+                        {aiSuggestions.beneficiaryContext && (
+                          <div style={{ gridColumn: "1 / -1" }}>
+                            <strong>Beneficiary context:</strong> {aiSuggestions.beneficiaryContext}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -633,6 +791,21 @@ export default function CreateDonation() {
           </div>
         </div>
       </div>
+
+      {/* Smart Match Recommendation Modal */}
+      <MatchRecommendationModal
+        isOpen={showMatchModal}
+        onClose={() => {
+          setShowMatchModal(false);
+          navigate("/donor/my-donations");
+        }}
+        title="🎯 Smart Matching Recommendations"
+        subtitle={`Top active NGO requirements compatible with your donation of ${createdDonation?.quantity || form.quantity} ${form.unit} of ${form.category}.`}
+        recommendations={recommendations}
+        mode="donor"
+        onSelectMatch={handleAllocateMatch}
+        actionLoading={allocating}
+      />
     </div>
   );
 }

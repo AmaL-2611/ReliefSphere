@@ -28,17 +28,22 @@ exports.signup = async (req, res) => {
       latitude,
       longitude,
     } = req.body;
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const resolvedFullName = role === "recipient_org" ? orgName : fullName;
 
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: "Server configuration error." });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       fullName: resolvedFullName,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       phone,
       role,
@@ -92,14 +97,31 @@ exports.signup = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" },
-    );
+    // Only donors receive a login token immediately.
+    // Volunteers and organizations must await admin approval before logging in.
+    if (role === "donor") {
+      const token = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" },
+      );
+      return res.status(201).json({
+        token,
+        user: {
+          user_id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    }
 
-    res.status(201).json({
-      token,
+    // Org / volunteer: registration successful but no token — must await admin approval
+    return res.status(201).json({
+      message:
+        role === "recipient_org"
+          ? "Organization registered successfully. Awaiting admin approval."
+          : "Volunteer registered successfully. Awaiting admin approval.",
       user: {
         user_id: user._id,
         fullName: user.fullName,
@@ -115,8 +137,12 @@ exports.signup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required." });
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail }).select("+password");
+    if (!user || !user.password) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
@@ -197,40 +223,38 @@ exports.googleSignIn = async (req, res) => {
 
     if (!idToken) return res.status(400).json({ message: "Missing idToken" });
 
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({
+        message: "Google Sign-In is not configured on this server. Please use email/password login.",
+      });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: "Server configuration error." });
+    }
+
     let email, name;
 
     try {
-      if (process.env.GOOGLE_CLIENT_ID) {
-        const ticket = await googleClient.verifyIdToken({
-          idToken,
-          audience: process.env.GOOGLE_CLIENT_ID,
-        });
-        const payload = ticket.getPayload();
-        email = payload.email;
-        name = payload.name;
-      } else {
-        // Fallback for development without GOOGLE_CLIENT_ID set in .env
-        const decoded = jwt.decode(idToken);
-        if (!decoded || !decoded.email) {
-          return res.status(400).json({
-            message:
-              "Invalid Google token. Ensure GOOGLE_CLIENT_ID is set in .env",
-          });
-        }
-        email = decoded.email;
-        name = decoded.name;
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+
+      if (!payload || !payload.email) {
+        return res.status(400).json({ message: "Invalid Google token payload." });
       }
+      if (!payload.email_verified) {
+        return res.status(400).json({ message: "Google account email is not verified." });
+      }
+
+      email = payload.email.toLowerCase().trim();
+      name = payload.name;
     } catch (verifyErr) {
-      // Decode directly if verifyIdToken failed (e.g. client ID mismatch in dev)
-      const decoded = jwt.decode(idToken);
-      if (decoded && decoded.email) {
-        email = decoded.email;
-        name = decoded.name;
-      } else {
-        return res.status(400).json({
-          message: "Google token verification failed: " + verifyErr.message,
-        });
-      }
+      return res.status(400).json({
+        message: "Google token verification failed. Please try again.",
+      });
     }
 
     let user = await User.findOne({ email });
@@ -238,9 +262,7 @@ exports.googleSignIn = async (req, res) => {
 
     if (!user) {
       isNewUser = true;
-      const selectedRole = ["donor", "recipient_org", "volunteer"].includes(
-        role,
-      )
+      const selectedRole = ["donor", "recipient_org", "volunteer"].includes(role)
         ? role
         : "donor";
 
@@ -254,6 +276,7 @@ exports.googleSignIn = async (req, res) => {
         email,
         phone: phone || null,
         role: selectedRole,
+        // Only donors are immediately verified; orgs and volunteers need admin approval
         isVerified: selectedRole === "donor",
       });
 
@@ -262,45 +285,76 @@ exports.googleSignIn = async (req, res) => {
           userId: user._id,
           donorType: donorType || "individual",
           preferredCategories: preferredCategories || [],
-          address: address || "Google Sign-In Account",
+          address: address || "",
           latitude: latitude || null,
           longitude: longitude || null,
         });
       } else if (selectedRole === "volunteer") {
         await Volunteer.create({
           userId: user._id,
-
           dob: dob ? new Date(dob) : new Date("2000-01-01"),
-
           phone: phone || "",
-
-          address: address || "Google Sign-In Account",
-
+          address: address || "",
           skills: skills || [],
-
           latitude: latitude || null,
-
           longitude: longitude || null,
-
           verificationStatus: "pending",
         });
       } else if (selectedRole === "recipient_org") {
+        // Organizations registered via Google still require admin approval
         await RecipientOrganization.create({
           userId: user._id,
-          orgName: orgName || name || "Google Sign-In Organization",
+          orgName: orgName || name || "Organization",
           orgType: orgType || "ngo",
           registrationNumber: registrationNumber || "",
-          address: address || "Google Sign-In Account",
+          address: address || "",
           latitude: latitude || null,
           longitude: longitude || null,
-          verificationStatus: "verified",
+          verificationStatus: "pending",
         });
+      }
+
+      // New non-donor users must await approval — return without a token
+      if (selectedRole !== "donor") {
+        return res.status(201).json({
+          isNewUser: true,
+          message:
+            selectedRole === "recipient_org"
+              ? "Organization registered via Google. Awaiting admin approval."
+              : "Volunteer registered via Google. Awaiting admin approval.",
+          user: {
+            user_id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role,
+          },
+        });
+      }
+    } else {
+      // Existing user — enforce approval status
+      if (user.role === "volunteer") {
+        const volunteer = await Volunteer.findOne({ userId: user._id });
+        if (volunteer && volunteer.verificationStatus === "pending") {
+          return res.status(403).json({ message: "Your volunteer account is awaiting admin approval." });
+        }
+        if (volunteer && volunteer.verificationStatus === "rejected") {
+          return res.status(403).json({ message: "Your volunteer registration was rejected." });
+        }
+      }
+      if (user.role === "recipient_org") {
+        const org = await RecipientOrganization.findOne({ userId: user._id });
+        if (org && org.verificationStatus === "pending") {
+          return res.status(403).json({ message: "Your organization is awaiting admin approval." });
+        }
+        if (org && org.verificationStatus === "rejected") {
+          return res.status(403).json({ message: "Your organization registration was rejected." });
+        }
       }
     }
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      process.env.JWT_SECRET || "default_jwt_secret",
+      process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
 
@@ -325,7 +379,11 @@ const sendEmail = require("../utils/sendEmail");
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    if (!email) {
+      return res.status(400).json({ message: "Email address is required." });
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
 
     // Always respond success, even if user doesn't exist — avoids leaking which emails are registered
     if (!user) {
@@ -344,15 +402,20 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
     await user.save();
 
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password/${resetToken}`;
 
-    await sendEmail(
-      user.email,
-      "Reset your ReliefSphere AI password",
-      `<p>Hi ${user.fullName},</p>
-       <p>Click the link below to reset your password. This link expires in 30 minutes.</p>
-       <a href="${resetUrl}">${resetUrl}</a>`,
-    );
+    try {
+      await sendEmail(
+        user.email,
+        "Reset your ReliefSphere password",
+        `<p>Hi ${user.fullName},</p>
+         <p>Click the link below to reset your password. This link expires in 30 minutes.</p>
+         <a href="${resetUrl}">${resetUrl}</a>`,
+      );
+    } catch (emailErr) {
+      console.error("Password reset email failed:", emailErr.message);
+      // Token is already saved — we respond success but log the failure
+    }
 
     res
       .status(200)
@@ -361,6 +424,7 @@ exports.forgotPassword = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 exports.resetPassword = async (req, res) => {
   try {

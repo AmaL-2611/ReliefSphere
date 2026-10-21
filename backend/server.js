@@ -14,6 +14,7 @@ const deliveryRoutes = require("./routes/deliveryRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const campaignRoutes = require("./routes/campaignRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const beneficiaryRoutes = require("./routes/beneficiaryRoutes");
 
 dotenv.config();
 connectDB();
@@ -33,6 +34,7 @@ app.use("/api/deliveries", deliveryRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/campaigns", campaignRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/beneficiaries", beneficiaryRoutes);
 
 
 // ── Static Files ──

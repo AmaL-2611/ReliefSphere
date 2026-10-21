@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import MatchRecommendationModal from "../../components/common/MatchRecommendationModal";
+
 
 const URGENCY_BADGES = {
   critical: "org-badge-urgent-critical",
@@ -18,6 +20,13 @@ export default function MyRequirements() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Smart Matching State
+  const [selectedReqForMatch, setSelectedReqForMatch] = useState(null);
+  const [matchRecommendations, setMatchRecommendations] = useState([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
 
   const fetchRequirements = async () => {
     setLoading(true);
@@ -55,6 +64,44 @@ export default function MyRequirements() {
       setDeleting(false);
     }
   };
+
+  const handleOpenMatches = async (req) => {
+    setSelectedReqForMatch(req);
+    setLoadingMatches(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await API.get(`/requirements/${req._id}/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMatchRecommendations(res.data.recommendations || []);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to fetch matching donations.");
+      setMatchRecommendations([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  const handleAcceptMatch = async (matchItem) => {
+    if (!selectedReqForMatch || actionLoading) return;
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await API.post(
+        `/requirements/${selectedReqForMatch._id}/match-donation/${matchItem.donationId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(res.data.message || "Donation accepted and matched successfully!");
+      setSelectedReqForMatch(null);
+      await fetchRequirements();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to accept match.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
 
   const filtered = filterStatus === "all"
     ? requirements
@@ -95,6 +142,7 @@ export default function MyRequirements() {
           { key: "matched", label: `Matched (${stats.matched || 0})` },
           { key: "fulfilled", label: `Fulfilled (${stats.fulfilled || 0})` },
           { key: "rejected", label: `Rejected (${stats.rejected || 0})` },
+          { key: "expired", label: `Expired (${stats.expired || 0})` },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -170,7 +218,12 @@ export default function MyRequirements() {
                           ❌ Rejected
                         </span>
                       )}
-                      {req.status !== "pending" && req.status !== "open" && req.status !== "rejected" && (
+                      {req.status === "expired" && (
+                        <span style={{ background: "#f1f5f9", color: "#64748b", border: "1px solid #cbd5e1", padding: "4px 10px", borderRadius: 999, fontSize: 12, fontWeight: 700 }}>
+                          ⌛ Expired
+                        </span>
+                      )}
+                      {req.status !== "pending" && req.status !== "open" && req.status !== "rejected" && req.status !== "expired" && (
                         <span className={`org-badge org-badge-${req.status}`}>
                           {req.status}
                         </span>
@@ -180,26 +233,47 @@ export default function MyRequirements() {
                       {new Date(req.createdAt).toLocaleDateString("en-IN")}
                     </td>
                     <td>
-                      {req.status === "open" || req.status === "pending" || req.status === "rejected" ? (
-                        <button
-                          style={{
-                            background: "#fee2e2",
-                            color: "#dc2626",
-                            border: "none",
-                            padding: "6px 12px",
-                            borderRadius: 8,
-                            fontSize: 12,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                          }}
-                          id={`delete-req-${req._id}`}
-                          onClick={() => setDeleteConfirm(req._id)}
-                        >
-                          🗑 Delete
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 12, color: "#94a3b8" }}>In Progress</span>
-                      )}
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                        {(req.status === "open" || req.status === "matched") && (
+                          <button
+                            style={{
+                              background: "#ecfdf5",
+                              color: "#059669",
+                              border: "1px solid #10b981",
+                              padding: "6px 12px",
+                              borderRadius: 8,
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                            id={`smart-matches-${req._id}`}
+                            onClick={() => handleOpenMatches(req)}
+                          >
+                            🎯 Smart Matches
+                          </button>
+                        )}
+
+                        {req.status === "open" || req.status === "pending" || req.status === "rejected" || req.status === "expired" ? (
+                          <button
+                            style={{
+                              background: "#fee2e2",
+                              color: "#dc2626",
+                              border: "none",
+                              padding: "6px 12px",
+                              borderRadius: 8,
+                              fontSize: 12,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                            }}
+                            id={`delete-req-${req._id}`}
+                            onClick={() => setDeleteConfirm(req._id)}
+                          >
+                            🗑 Delete
+                          </button>
+                        ) : req.status !== "matched" ? (
+                          <span style={{ fontSize: 12, color: "#94a3b8" }}>In Progress</span>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -268,6 +342,23 @@ export default function MyRequirements() {
           </div>
         </div>
       )}
+
+      {/* Smart Match Recommendation Modal (Workflow B) */}
+      <MatchRecommendationModal
+        isOpen={Boolean(selectedReqForMatch)}
+        onClose={() => setSelectedReqForMatch(null)}
+        title="🎯 Compatible Donations for Your Requirement"
+        subtitle={
+          selectedReqForMatch
+            ? `Top available donor pledges compatible with "${selectedReqForMatch.title}" (${selectedReqForMatch.quantity} ${selectedReqForMatch.unit || "Packets"} of ${selectedReqForMatch.category}).`
+            : ""
+        }
+        recommendations={matchRecommendations}
+        loading={loadingMatches}
+        mode="organization"
+        onSelectMatch={handleAcceptMatch}
+        actionLoading={actionLoading}
+      />
     </>
   );
 }

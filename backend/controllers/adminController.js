@@ -5,31 +5,7 @@ const Settings = require("../models/settingsModel");
 const sendEmail = require("../utils/sendEmail");
 
 
-exports.getDonors = async (req, res) => {
-  try {
-    const donors = await User.find({
-      role: "donor",
-    }).sort({ createdAt: -1 });
 
-    const stats = {
-      total: donors.length,
-      individual: donors.filter((d) => d.donorType === "individual").length,
-      business: donors.filter((d) => d.donorType === "small_business").length,
-      institution: donors.filter(
-        (d) => d.donorType === "educational_institution",
-      ).length,
-    };
-
-    res.json({
-      donors,
-      stats,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: "Failed to fetch donors",
-    });
-  }
-};
 /* ===========================
    GET PENDING VOLUNTEERS
 =========================== */
@@ -318,36 +294,45 @@ exports.rejectVolunteer = async (req, res) => {
   try {
     const { reason } = req.body;
 
-    const volunteer = await Volunteer.findById(req.params.id).populate(
-      "userId",
-    );
+    const volunteer = await Volunteer.findById(req.params.id).populate("userId");
+
+    if (!volunteer) {
+      return res.status(404).json({ message: "Volunteer not found." });
+    }
 
     volunteer.verificationStatus = "rejected";
-    volunteer.rejectionReason = reason;
+    volunteer.rejectionReason = reason || "Rejected by administrator";
+    volunteer.approvedBy = req.user.id;
+    volunteer.approvedAt = new Date();
 
     await volunteer.save();
 
-    await sendEmail(
-      volunteer.userId.email,
-      "Volunteer Registration Rejected",
-      `
+    // Also mark the user as not verified
+    await User.findByIdAndUpdate(volunteer.userId._id, { isVerified: false });
+
+    try {
+      await sendEmail(
+        volunteer.userId.email,
+        "Volunteer Registration Rejected",
+        `
       <h2>Registration Rejected</h2>
+
+      <p>Hello ${volunteer.userId.fullName},</p>
 
       <p>Reason:</p>
 
-      <b>${reason}</b>
+      <b>${reason || "Rejected by administrator"}</b>
 
       <p>You may register again with valid documents.</p>
       `,
-    );
+      );
+    } catch (emailErr) {
+      console.error("Failed to send rejection email:", emailErr.message);
+    }
 
-    res.json({
-      message: "Volunteer rejected.",
-    });
+    res.json({ message: "Volunteer rejected." });
   } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -453,3 +438,100 @@ exports.updateSettings = async (req, res) => {
   }
 };
 
+/* ===========================
+   ADMIN DASHBOARD STATS
+=========================== */
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const Donation = require("../models/donationModel");
+    const Requirement = require("../models/requirementModel");
+    const Delivery = require("../models/deliveryModel");
+    const Donor = require("../models/donorModel");
+
+    const [
+      totalUsers,
+      pendingOrgs,
+      verifiedOrgs,
+      rejectedOrgs,
+      pendingVolunteers,
+      verifiedVolunteers,
+      rejectedVolunteers,
+      totalDonors,
+      totalDonations,
+      pendingDonations,
+      matchedDonations,
+      acceptedDonations,
+      deliveredDonations,
+      cancelledDonations,
+      totalRequirements,
+      openRequirements,
+      fulfilledRequirements,
+      totalDeliveries,
+      assignedDeliveries,
+      inTransitDeliveries,
+      completedDeliveries,
+    ] = await Promise.all([
+      User.countDocuments(),
+      RecipientOrganization.countDocuments({ verificationStatus: "pending" }),
+      RecipientOrganization.countDocuments({ verificationStatus: "verified" }),
+      RecipientOrganization.countDocuments({ verificationStatus: "rejected" }),
+      Volunteer.countDocuments({ verificationStatus: "pending" }),
+      Volunteer.countDocuments({ verificationStatus: "verified" }),
+      Volunteer.countDocuments({ verificationStatus: "rejected" }),
+      Donor.countDocuments(),
+      Donation.countDocuments(),
+      Donation.countDocuments({ status: "pending" }),
+      Donation.countDocuments({ status: "matched" }),
+      Donation.countDocuments({ status: "accepted" }),
+      Donation.countDocuments({ status: "delivered" }),
+      Donation.countDocuments({ status: "cancelled" }),
+      Requirement.countDocuments(),
+      Requirement.countDocuments({ status: "open" }),
+      Requirement.countDocuments({ status: "fulfilled" }),
+      Delivery.countDocuments(),
+      Delivery.countDocuments({ status: "assigned" }),
+      Delivery.countDocuments({ status: { $in: ["picked_up", "in_transit"] } }),
+      Delivery.countDocuments({ status: "delivered" }),
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        users: { total: totalUsers, donors: totalDonors },
+        organizations: {
+          pending: pendingOrgs,
+          verified: verifiedOrgs,
+          rejected: rejectedOrgs,
+          total: pendingOrgs + verifiedOrgs + rejectedOrgs,
+        },
+        volunteers: {
+          pending: pendingVolunteers,
+          verified: verifiedVolunteers,
+          rejected: rejectedVolunteers,
+          total: pendingVolunteers + verifiedVolunteers + rejectedVolunteers,
+        },
+        donations: {
+          total: totalDonations,
+          pending: pendingDonations,
+          matched: matchedDonations,
+          accepted: acceptedDonations,
+          delivered: deliveredDonations,
+          cancelled: cancelledDonations,
+        },
+        requirements: {
+          total: totalRequirements,
+          open: openRequirements,
+          fulfilled: fulfilledRequirements,
+        },
+        deliveries: {
+          total: totalDeliveries,
+          assigned: assignedDeliveries,
+          inTransit: inTransitDeliveries,
+          completed: completedDeliveries,
+        },
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

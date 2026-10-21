@@ -28,6 +28,13 @@ const FALLBACK_IMAGES = {
   essentials: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb0?auto=format&fit=crop&w=600&q=80",
 };
 
+const resolveImageUrl = (url, category) => {
+  if (!url) return FALLBACK_IMAGES[category] || FALLBACK_IMAGES.food;
+  const clean = String(url).replace(/\\/g, "/");
+  if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
+  return `http://localhost:5000${clean.startsWith("/") ? "" : "/"}${clean}`;
+};
+
 export default function BrowseRequirements() {
   const navigate = useNavigate();
   const [requirements, setRequirements] = useState([]);
@@ -37,6 +44,49 @@ export default function BrowseRequirements() {
   const [sortBy, setSortBy] = useState("newest");
   const [search, setSearch] = useState("");
   const [selectedReq, setSelectedReq] = useState(null);
+  const [caseAuditProfile, setCaseAuditProfile] = useState(null);
+  const [loadingCaseAudit, setLoadingCaseAudit] = useState(false);
+
+  useEffect(() => {
+    if (!selectedReq) {
+      setCaseAuditProfile(null);
+      return;
+    }
+
+    // If beneficiaryCaseId is already populated as an object with caseNumber
+    if (
+      selectedReq.beneficiaryCaseId &&
+      typeof selectedReq.beneficiaryCaseId === "object" &&
+      selectedReq.beneficiaryCaseId.caseNumber
+    ) {
+      setCaseAuditProfile(selectedReq.beneficiaryCaseId);
+      return;
+    }
+
+    // Otherwise fetch full audit profile by case reference or ID
+    const ref =
+      (typeof selectedReq.beneficiaryCaseId === "string" ? selectedReq.beneficiaryCaseId : null) ||
+      selectedReq.description?.match(/BEN-[\w-]+/)?.[0];
+
+    if (ref) {
+      setLoadingCaseAudit(true);
+      const token = localStorage.getItem("token");
+      API.get(`/beneficiaries/case-info/${ref}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => {
+          setCaseAuditProfile(res.data.case || res.data);
+        })
+        .catch((err) => {
+          console.warn("Could not fetch case audit info:", err);
+        })
+        .finally(() => {
+          setLoadingCaseAudit(false);
+        });
+    } else {
+      setCaseAuditProfile(null);
+    }
+  }, [selectedReq]);
 
   useEffect(() => {
     const fetchRequirements = async () => {
@@ -61,7 +111,14 @@ export default function BrowseRequirements() {
   }, [filterCategory, filterUrgency]);
 
   // Filter & Search Logic
+  const now = new Date();
   let filtered = requirements.filter((r) => {
+    // Exclude expired requirements from active donor browsing
+    const deadline = r.requiredBefore ? new Date(r.requiredBefore) : (r.expiresAt ? new Date(r.expiresAt) : null);
+    if (r.status === "expired" || (deadline && deadline < now)) {
+      return false;
+    }
+
     if (!search.trim()) return true;
     const s = search.toLowerCase();
     const titleMatch = r.title?.toLowerCase().includes(s);
@@ -310,10 +367,19 @@ export default function BrowseRequirements() {
           {filtered.map((req) => {
             const urgencyObj =
               URGENCIES.find((u) => u.id === req.urgency) || URGENCIES[1];
-            const bgImage =
-              req.imageUrl || FALLBACK_IMAGES[req.category] || FALLBACK_IMAGES.food;
+
+            const caseEvidenceImg =
+              req.beneficiaryCaseId?.supportingEvidence?.slice()?.reverse()?.find(
+                (e) => e.fileUrl && /\.(jpe?g|png|webp|gif|svg)$/i.test(e.fileUrl)
+              )?.fileUrl ||
+              req.beneficiaryCaseId?.supportingEvidence?.[req.beneficiaryCaseId.supportingEvidence.length - 1]?.fileUrl;
+
+            const bgImage = resolveImageUrl(
+              caseEvidenceImg || req.imageUrl,
+              req.category
+            );
             const aiScore = getAiScore(req);
-            const received = req.receivedQuantity || 0;
+            const received = Number(req.fulfilledQuantity) || Number(req.receivedQuantity) || 0;
             const totalNeeded = req.quantity || 1;
             const progressPercent = Math.min(
               100,
@@ -389,6 +455,27 @@ export default function BrowseRequirements() {
                     {req.urgency}
                   </span>
 
+                  {req.beneficiaryType === "Verified Beneficiary Household" && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: 14,
+                        left: 14,
+                        padding: "5px 12px",
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        background: "#0891b2",
+                        color: "#ffffff",
+                        boxShadow: "0 2px 8px rgba(8,145,178,0.35)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      🛡️ Verified Beneficiary Need
+                    </span>
+                  )}
 
                   {/* Image Bottom Overlay Info: NGO Name & Verification */}
                   <div style={{ position: "absolute", bottom: 12, left: 14, right: 14 }}>
@@ -704,7 +791,7 @@ export default function BrowseRequirements() {
               <div style={{ background: "#f8fafc", padding: 14, borderRadius: 14, border: "1px solid #e2e8f0" }}>
                 <span style={{ fontSize: 11, color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>Current Fulfillment</span>
                 <div style={{ fontSize: 20, fontWeight: 800, color: "#0284c7", marginTop: 2 }}>
-                  📊 {Math.min(100, Math.round(((selectedReq.receivedQuantity || 0) / (selectedReq.quantity || 1)) * 100))}%
+                  📊 {Math.min(100, Math.round((((Number(selectedReq.fulfilledQuantity) || Number(selectedReq.receivedQuantity) || 0)) / (selectedReq.quantity || 1)) * 100))}%
                 </div>
               </div>
 
@@ -716,13 +803,175 @@ export default function BrowseRequirements() {
               </div>
             </div>
 
+            {/* Verified Beneficiary Case Audit & Demographic Profile */}
+            {(() => {
+              const caseProfile = caseAuditProfile || (typeof selectedReq.beneficiaryCaseId === "object" ? selectedReq.beneficiaryCaseId : null);
+              const isBeneficiaryNeed = Boolean(caseProfile || selectedReq.beneficiaryType === "Verified Beneficiary Household" || selectedReq.description?.includes("BEN-"));
+              if (!isBeneficiaryNeed) return null;
+
+              // Collect evidence files
+              const evidenceList =
+                caseProfile?.supportingEvidence && caseProfile.supportingEvidence.length > 0
+                  ? caseProfile.supportingEvidence
+                  : selectedReq.imageUrl
+                  ? [{ fileUrl: selectedReq.imageUrl, description: "Uploaded Supporting Evidence" }]
+                  : [];
+
+              return (
+                <div
+                  style={{
+                    background: "#f0fdf4",
+                    borderRadius: 18,
+                    padding: 20,
+                    border: "1.5px solid #86efac",
+                    marginBottom: 24,
+                    boxShadow: "0 4px 16px rgba(22,101,52,0.06)",
+                  }}
+                >
+                  {loadingCaseAudit && (
+                    <div style={{ padding: "8px 12px", background: "#dcfce7", color: "#15803d", borderRadius: 8, fontSize: 12, marginBottom: 12, fontWeight: 700 }}>
+                      ⏳ Fetching complete verified case audit records...
+                    </div>
+                  )}
+
+                  {/* Header Banner */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 24 }}>🛡️</span>
+                      <div>
+                        <div style={{ fontWeight: 800, color: "#166534", fontSize: 16 }}>
+                          Verified Household Case: {caseProfile?.caseNumber || selectedReq.description?.match(/BEN-[\w-]+/)?.[0] || "Audited Record"}
+                        </div>
+                        <div style={{ fontSize: 12, color: "#15803d", marginTop: 2 }}>
+                          Audited by Platform Admin • Registered & Assessed by {selectedReq.organizationId?.orgName || "Verified NGO"}
+                        </div>
+                      </div>
+                    </div>
+                    <span style={{ background: "#22c55e", color: "#ffffff", padding: "5px 12px", borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 0.5, boxShadow: "0 2px 6px rgba(34,197,94,0.3)" }}>
+                      Admin Verified ✓
+                    </span>
+                  </div>
+
+                  {/* Demographic Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, fontSize: 13, marginBottom: 14 }}>
+                    <div style={{ background: "#ffffff", padding: 10, borderRadius: 10, border: "1px solid #bbf7d0" }}>
+                      <span style={{ fontSize: 11, color: "#15803d", fontWeight: 700, textTransform: "uppercase" }}>Camp / Area</span>
+                      <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{caseProfile?.area || selectedReq.location || "Verified Camp / Area"}</div>
+                    </div>
+                    <div style={{ background: "#ffffff", padding: 10, borderRadius: 10, border: "1px solid #bbf7d0" }}>
+                      <span style={{ fontSize: 11, color: "#15803d", fontWeight: 700, textTransform: "uppercase" }}>Household Size</span>
+                      <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>{caseProfile?.householdSize || selectedReq.beneficiaryCount || 1} members</div>
+                    </div>
+                    <div style={{ background: "#ffffff", padding: 10, borderRadius: 10, border: "1px solid #bbf7d0" }}>
+                      <span style={{ fontSize: 11, color: "#15803d", fontWeight: 700, textTransform: "uppercase" }}>Request Source</span>
+                      <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2, textTransform: "capitalize" }}>
+                        {(caseProfile?.requestSource || "ngo_field_assessment").replace(/_/g, " ")}
+                      </div>
+                    </div>
+                    <div style={{ background: "#ffffff", padding: 10, borderRadius: 10, border: "1px solid #bbf7d0" }}>
+                      <span style={{ fontSize: 11, color: "#15803d", fontWeight: 700, textTransform: "uppercase" }}>Assessment Date</span>
+                      <div style={{ fontWeight: 800, color: "#0f172a", marginTop: 2 }}>
+                        {caseProfile?.assessmentDate
+                          ? new Date(caseProfile.assessmentDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                          : "Verified"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vulnerability Counts */}
+                  <div style={{ background: "#ffffff", padding: "12px 16px", borderRadius: 12, border: "1px solid #bbf7d0", marginBottom: 14, fontSize: 13, color: "#166534" }}>
+                    <div style={{ fontWeight: 800, marginBottom: 6, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, color: "#14532d" }}>
+                      Household Vulnerability Profile:
+                    </div>
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 12 }}>
+                      <span>👶 Children: <strong>{caseProfile?.vulnerableMembers?.children ?? 0}</strong></span>
+                      <span>👵 Elderly: <strong>{caseProfile?.vulnerableMembers?.elderly ?? 0}</strong></span>
+                      <span>♿ Disabled: <strong>{caseProfile?.vulnerableMembers?.disabled ?? 0}</strong></span>
+                      <span>🤱 Pregnant / Nursing: <strong>{caseProfile?.vulnerableMembers?.pregnantOrLactating ?? 0}</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Assessed Needed Relief Requirements Table */}
+                  {caseProfile?.neededItems && caseProfile.neededItems.length > 0 && (
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontWeight: 800, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, color: "#14532d", marginBottom: 6 }}>
+                        Full Field Assessment Needs Breakdown:
+                      </div>
+                      <div style={{ overflowX: "auto", borderRadius: 10, border: "1px solid #bbf7d0", background: "#ffffff" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                          <thead>
+                            <tr style={{ background: "#dcfce7", color: "#166534", textAlign: "left" }}>
+                              <th style={{ padding: "8px 10px" }}>Item Name</th>
+                              <th style={{ padding: "8px 10px" }}>Category</th>
+                              <th style={{ padding: "8px 10px" }}>Assessed Need</th>
+                              <th style={{ padding: "8px 10px" }}>Distributed</th>
+                              <th style={{ padding: "8px 10px" }}>Remaining Unmet</th>
+                              <th style={{ padding: "8px 10px" }}>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {caseProfile.neededItems.map((item, idx) => {
+                              const remaining = Math.max(0, (item.quantityNeeded || 0) - (item.quantityDistributed || 0));
+                              return (
+                                <tr key={idx} style={{ borderBottom: "1px solid #f0fdf4" }}>
+                                  <td style={{ padding: "8px 10px", fontWeight: 700, color: "#0f172a" }}>{item.itemName}</td>
+                                  <td style={{ padding: "8px 10px", color: "#64748b", textTransform: "capitalize" }}>{item.category}</td>
+                                  <td style={{ padding: "8px 10px" }}>{item.quantityNeeded} {item.unit || "Items"}</td>
+                                  <td style={{ padding: "8px 10px", color: "#059669", fontWeight: 700 }}>{item.quantityDistributed || 0} {item.unit || "Items"}</td>
+                                  <td style={{ padding: "8px 10px", fontWeight: 700, color: remaining > 0 ? "#dc2626" : "#059669" }}>
+                                    {remaining} {item.unit || "Items"}
+                                  </td>
+                                  <td style={{ padding: "8px 10px" }}>
+                                    <span style={{
+                                      background: remaining === 0 ? "#dcfce7" : "#fef3c7",
+                                      color: remaining === 0 ? "#15803d" : "#b45309",
+                                      padding: "2px 6px",
+                                      borderRadius: 4,
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                    }}>
+                                      {remaining === 0 ? "FULFILLED ✓" : "NEEDS DONORS"}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Field Assessment Rationale */}
+                  {(caseProfile?.assessmentRationale || selectedReq.description) && (
+                    <div style={{ background: "#ffffff", padding: "12px 14px", borderRadius: 10, border: "1px solid #bbf7d0", marginBottom: 10, fontSize: 12, color: "#14532d", lineHeight: 1.5 }}>
+                      <strong>Field Assessment Rationale:</strong> {caseProfile?.assessmentRationale || selectedReq.description}
+                    </div>
+                  )}
+
+                  {/* Admin Audit Notes */}
+                  {caseProfile?.verificationDetails?.decisionNotes && (
+                    <div style={{ background: "#ecfdf5", padding: "10px 14px", borderRadius: 10, border: "1px solid #a7f3d0", marginBottom: 10, fontSize: 12, color: "#065f46" }}>
+                      <strong>Platform Admin Verification Audit:</strong> "{caseProfile.verificationDetails.decisionNotes}"
+                    </div>
+                  )}
+
+                  {/* Traceability Guarantee */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#047857", fontWeight: 600, marginTop: 4 }}>
+                    <span>🔒</span>
+                    <span>100% Traceable: Assessed on-ground by NGO field workers, verified by platform admin, and tracked to recipient handover.</span>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Description */}
             <div style={{ marginBottom: 24 }}>
               <h4 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>
                 Requirement Details & Background
               </h4>
               <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.6, margin: 0 }}>
-                {selectedReq.description || "Food support required for flood affected families currently residing in relief camps."}
+                {selectedReq.description || "Relief support required for flood affected families currently residing in relief camps."}
               </p>
             </div>
 
@@ -731,19 +980,115 @@ export default function BrowseRequirements() {
               <h4 style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>
                 Supporting Evidence & Relief Site Photos
               </h4>
-              <div style={{ display: "flex", gap: 12, overflowX: "auto" }}>
-                <img
-                  src={selectedReq.imageUrl || FALLBACK_IMAGES[selectedReq.category] || FALLBACK_IMAGES.food}
-                  alt="Evidence"
-                  style={{
-                    width: 220,
-                    height: 140,
-                    borderRadius: 14,
-                    objectFit: "cover",
-                    border: "1px solid #cbd5e1",
-                  }}
-                />
-              </div>
+              {(() => {
+                const caseProfile = caseAuditProfile || (typeof selectedReq.beneficiaryCaseId === "object" ? selectedReq.beneficiaryCaseId : null);
+                let evidenceItems = [];
+                if (caseProfile?.supportingEvidence && caseProfile.supportingEvidence.length > 0) {
+                  evidenceItems = caseProfile.supportingEvidence;
+                } else if (selectedReq.imageUrl) {
+                  evidenceItems = [{ fileUrl: selectedReq.imageUrl, description: "Uploaded Verification Photo" }];
+                }
+
+                if (evidenceItems.length === 0) {
+                  return (
+                    <img
+                      src={resolveImageUrl(selectedReq.imageUrl, selectedReq.category)}
+                      alt="Relief Site"
+                      style={{ width: 240, height: 150, borderRadius: 14, objectFit: "cover", border: "1px solid #cbd5e1" }}
+                    />
+                  );
+                }
+
+                return (
+                  <div style={{ display: "flex", gap: 14, overflowX: "auto", flexWrap: "wrap" }}>
+                    {evidenceItems.map((ev, idx) => {
+                      const resolvedUrl = resolveImageUrl(ev.fileUrl, selectedReq.category);
+                      const isPdf = ev.fileUrl && ev.fileUrl.toLowerCase().endsWith(".pdf");
+
+                      if (isPdf) {
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              width: 220,
+                              height: 150,
+                              borderRadius: 14,
+                              border: "1.5px dashed #059669",
+                              background: "#f0fdf4",
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 12,
+                              textAlign: "center",
+                            }}
+                          >
+                            <span style={{ fontSize: 32 }}>📄</span>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "#166534", marginTop: 4 }}>
+                              Assessment Document
+                            </div>
+                            <a
+                              href={resolvedUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                marginTop: 8,
+                                padding: "4px 10px",
+                                background: "#059669",
+                                color: "#fff",
+                                borderRadius: 6,
+                                fontSize: 11,
+                                fontWeight: 700,
+                                textDecoration: "none",
+                              }}
+                            >
+                              Open PDF ↗
+                            </a>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            width: 240,
+                            borderRadius: 14,
+                            overflow: "hidden",
+                            border: "1px solid #cbd5e1",
+                            background: "#ffffff",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                          }}
+                        >
+                          <img
+                            src={resolvedUrl}
+                            alt="Supporting Evidence"
+                            style={{
+                              width: "100%",
+                              height: 140,
+                              objectFit: "cover",
+                              display: "block",
+                            }}
+                          />
+                          <div style={{ padding: "8px 10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: "#475569" }}>
+                              {ev.evidenceType ? ev.evidenceType.replace(/_/g, " ").toUpperCase() : "VERIFIED PHOTO"}
+                            </span>
+                            <a
+                              href={resolvedUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ fontSize: 11, color: "#0891b2", fontWeight: 700, textDecoration: "none" }}
+                            >
+                              View Full ↗
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Modal Actions */}

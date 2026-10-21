@@ -31,6 +31,21 @@ const requirementSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
+    fulfilledQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    receivedQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    donorCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     urgency: {
       type: String,
       enum: ["low", "medium", "high", "critical"],
@@ -70,12 +85,17 @@ const requirementSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "open", "matched", "fulfilled", "closed", "rejected"],
+      enum: ["pending", "open", "matched", "fulfilled", "closed", "rejected", "expired"],
       default: "pending",
     },
     matchedDonation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Donation",
+      default: null,
+    },
+    beneficiaryCaseId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BeneficiaryCase",
       default: null,
     },
     expiresAt: {

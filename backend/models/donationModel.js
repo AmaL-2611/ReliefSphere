@@ -101,6 +101,10 @@ const donationSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+    matchBreakdown: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
     acceptedAt: {
       type: Date,
       default: null,

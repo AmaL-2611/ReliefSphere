@@ -8,6 +8,7 @@ import IncomingDonations from "./IncomingDonations";
 import OrganizationProfile from "./OrganizationProfile";
 import CreateCampaign from "./CreateCampaign";
 import MyCampaigns from "./MyCampaigns";
+import BeneficiaryManagement from "./BeneficiaryManagement";
 import "./organization.css";
 
 export default function OrganizationDashboard() {
@@ -100,6 +101,17 @@ export default function OrganizationDashboard() {
                 <OrgNavbar pageTitle="Organization Profile" />
                 <div className="org-content">
                   <OrganizationProfile />
+                </div>
+              </>
+            }
+          />
+          <Route
+            path="beneficiaries/*"
+            element={
+              <>
+                <OrgNavbar pageTitle="Beneficiary Management" />
+                <div className="org-content">
+                  <BeneficiaryManagement />
                 </div>
               </>
             }

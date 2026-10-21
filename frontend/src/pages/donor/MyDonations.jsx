@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
 import ChatModal from "../../components/chat/ChatModal";
+import MatchRecommendationModal from "../../components/common/MatchRecommendationModal";
+
 
 const STATUS_MAP = {
   pending: { label: "Pending Admin Review ⏳", bg: "#fef3c7", color: "#92400e" },
@@ -41,6 +43,13 @@ export default function MyDonations() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+
+  // Recommendation modal state
+  const [selectedDonationForMatch, setSelectedDonationForMatch] = useState(null);
+  const [matchRecommendations, setMatchRecommendations] = useState([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [allocating, setAllocating] = useState(false);
+
 
   // Chat modal state
   const [chatConfig, setChatConfig] = useState({
@@ -100,6 +109,44 @@ export default function MyDonations() {
       toast.error(err.response?.data?.message || "Failed to cancel.");
     }
   };
+
+  const handleOpenMatches = async (donation) => {
+    setSelectedDonationForMatch(donation);
+    setLoadingMatches(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await API.get(`/donations/${donation._id}/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMatchRecommendations(res.data.recommendations || []);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to fetch smart matches.");
+      setMatchRecommendations([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  const handleAllocateMatch = async (matchItem) => {
+    if (!selectedDonationForMatch || allocating) return;
+    setAllocating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await API.post(
+        `/donations/${selectedDonationForMatch._id}/allocate`,
+        { requirementId: matchItem.requirementId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(res.data.message || "Donation successfully allocated to requirement!");
+      setSelectedDonationForMatch(null);
+      await fetchDonations();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to allocate match.");
+    } finally {
+      setAllocating(false);
+    }
+  };
+
 
   const filtered = filterStatus === "all"
     ? donations
@@ -204,6 +251,26 @@ export default function MyDonations() {
                         >
                           👁 Track
                         </button>
+
+                        {(d.status === "pending" || d.status === "matched") && (
+                          <button
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: 8,
+                              border: "1px solid #059669",
+                              background: "#ecfdf5",
+                              color: "#047857",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                            id={`smart-matches-${d._id}`}
+                            onClick={() => handleOpenMatches(d)}
+                          >
+                            🎯 Smart Matches
+                          </button>
+                        )}
+
 
                         <button
                           style={{
@@ -335,6 +402,23 @@ export default function MyDonations() {
         recipientName={chatConfig.recipientName}
         recipientRole={chatConfig.recipientRole}
         title={chatConfig.title}
+      />
+
+      {/* Smart Match Recommendation Modal */}
+      <MatchRecommendationModal
+        isOpen={Boolean(selectedDonationForMatch)}
+        onClose={() => setSelectedDonationForMatch(null)}
+        title="🎯 Smart Recommendations for Your Donation"
+        subtitle={
+          selectedDonationForMatch
+            ? `Compatible verified NGO requirements for ${selectedDonationForMatch.quantity} ${selectedDonationForMatch.unit || "Packets"} of ${selectedDonationForMatch.category}.`
+            : ""
+        }
+        recommendations={matchRecommendations}
+        loading={loadingMatches}
+        mode="donor"
+        onSelectMatch={handleAllocateMatch}
+        actionLoading={allocating}
       />
     </>
   );

@@ -24,6 +24,13 @@ exports.createCampaign = async (req, res) => {
       });
     }
 
+    if (org.verificationStatus !== "verified") {
+      return res.status(403).json({
+        success: false,
+        message: "Your organization must be verified by an administrator before creating campaigns.",
+      });
+    }
+
     // Business Rule: ONLY Community Shelters can create disaster relief campaigns
     const allowedOrgTypes = ["community_shelter"];
     if (!allowedOrgTypes.includes(org.orgType)) {

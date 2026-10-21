@@ -11,6 +11,7 @@ import {
   FaChartBar,
   FaCog,
   FaSignOutAlt,
+  FaUserCheck,
 } from "react-icons/fa";
 
 import "../../styles/admin/sidebar.css";
@@ -20,6 +21,7 @@ const menuItems = [
   { name: "Organizations", icon: <FaBuilding />, path: "/admin/organizations" },
   { name: "Volunteers", icon: <FaHandsHelping />, path: "/admin/volunteers" },
   { name: "Donors", icon: <FaUsers />, path: "/admin/donors" },
+  { name: "Beneficiaries", icon: <FaUserCheck />, path: "/admin/beneficiaries" },
   { name: "Donations", icon: <FaGift />, path: "/admin/donations" },
   { name: "Deliveries", icon: <FaTruck />, path: "/admin/deliveries" },
   { name: "Req. Requests", icon: <FaClipboardList />, path: "/admin/requirements" },

@@ -23,6 +23,7 @@ import Campaigns from "./pages/admin/Campaigns";
 import Requirements from "./pages/admin/Requirements";
 import Analytics from "./pages/admin/Analytics";
 import Settings from "./pages/admin/Settings";
+import BeneficiaryVerification from "./pages/admin/BeneficiaryVerification";
 
 function App() {
   return (
@@ -98,6 +99,7 @@ function App() {
           <Route path="organizations" element={<Organizations />} />
           <Route path="volunteers" element={<Volunteers />} />
           <Route path="donors" element={<Donors />} />
+          <Route path="beneficiaries" element={<BeneficiaryVerification />} />
           <Route path="donations" element={<Donations />} />
           <Route path="deliveries" element={<Deliveries />} />
           <Route path="requirements" element={<Requirements />} />

@@ -6,8 +6,9 @@ const { protect } = require("../middleware/authMiddleware");
 router.use(protect); // all notification routes require login
 
 router.get("/", notificationController.getNotifications);
-router.patch("/:id/read", notificationController.markAsRead);
+// Static paths MUST come before parameterized paths to avoid mismatches
 router.patch("/mark-all-read", notificationController.markAllRead);
 router.delete("/clear", notificationController.clearReadNotifications);
+router.patch("/:id/read", notificationController.markAsRead);
 
 module.exports = router;

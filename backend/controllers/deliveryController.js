@@ -17,12 +17,41 @@ exports.assignVolunteer = async (req, res) => {
       .populate("matchedOrganization", "address");
 
     if (!donation) return res.status(404).json({ message: "Donation not found." });
-    if (!["pending", "accepted", "matched"].includes(donation.status)) {
+    if (!donation.matchedOrganization) {
+      return res.status(400).json({
+        message: "Cannot assign volunteer: this donation has not been matched with a recipient NGO yet. Please match an NGO first so the volunteer has a delivery destination.",
+      });
+    }
+    if (!["accepted", "matched", "pending"].includes(donation.status)) {
       return res.status(400).json({ message: "Donation is not available for volunteer assignment." });
     }
 
     const volunteer = await Volunteer.findById(volunteerId);
     if (!volunteer) return res.status(404).json({ message: "Volunteer not found." });
+    if (volunteer.verificationStatus !== "verified") {
+      return res.status(400).json({ message: "Only verified volunteers can be assigned to deliveries." });
+    }
+
+    // Validate scheduled pickup time if provided
+    let parsedScheduledTime = null;
+    if (scheduledTime) {
+      parsedScheduledTime = new Date(scheduledTime);
+      if (isNaN(parsedScheduledTime.getTime())) {
+        return res.status(400).json({ message: "Invalid scheduled pickup date and time format." });
+      }
+      // Allow 2 minutes grace period for network latency / clock skew
+      if (parsedScheduledTime.getTime() < Date.now() - 2 * 60 * 1000) {
+        return res.status(400).json({
+          message: "Scheduled pickup time cannot be in the past. Please select a future date and time.",
+        });
+      }
+    }
+
+    // Prevent duplicate delivery assignment for the same donation
+    const existingDelivery = await Delivery.findOne({ donationId });
+    if (existingDelivery && ["assigned", "picked_up", "in_transit"].includes(existingDelivery.status)) {
+      return res.status(409).json({ message: "A delivery is already in progress for this donation." });
+    }
 
     // Create delivery record
     const delivery = await Delivery.create({
@@ -33,7 +62,7 @@ exports.assignVolunteer = async (req, res) => {
       dropAddress: donation.matchedOrganization?.address || "",
       pickupLat: donation.latitude,
       pickupLng: donation.longitude,
-      scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
+      scheduledTime: parsedScheduledTime,
     });
 
     // Update donation status
@@ -103,6 +132,7 @@ exports.markPickedUp = async (req, res) => {
     if (!delivery) return res.status(404).json({ message: "Delivery not found." });
 
     const volunteer = await Volunteer.findOne({ userId: req.user._id });
+    if (!volunteer) return res.status(403).json({ message: "Volunteer profile not found." });
     if (delivery.volunteerId.toString() !== volunteer._id.toString()) {
       return res.status(403).json({ message: "Not authorized." });
     }
@@ -143,6 +173,7 @@ exports.markDelivered = async (req, res) => {
     if (!delivery) return res.status(404).json({ message: "Delivery not found." });
 
     const volunteer = await Volunteer.findOne({ userId: req.user._id });
+    if (!volunteer) return res.status(403).json({ message: "Volunteer profile not found." });
     if (delivery.volunteerId.toString() !== volunteer._id.toString()) {
       return res.status(403).json({ message: "Not authorized." });
     }

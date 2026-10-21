@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import MatchRecommendationModal from "../../components/common/MatchRecommendationModal";
+
 
 const STATUS_BADGES = {
   pending: { label: "Pending", bg: "#fff7ed", color: "#c2410c" },
@@ -24,6 +26,13 @@ export default function Donations() {
   const [selectedVolunteer, setSelectedVolunteer] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [assigning, setAssigning] = useState(false);
+
+  // Smart Matching Modal State for Admin
+  const [matchModalDonation, setMatchModalDonation] = useState(null);
+  const [matchRecommendations, setMatchRecommendations] = useState([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [allocating, setAllocating] = useState(false);
+
 
   const fetchDonations = async () => {
     setLoading(true);
@@ -57,14 +66,33 @@ export default function Donations() {
     fetchDonations();
   }, []);
 
+  const getMinDateTime = () => {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  };
+
   const openAssignModal = (donation) => {
     setAssignModal(donation);
+    setSelectedVolunteer("");
+    setScheduledTime("");
     fetchVerifiedVolunteers();
   };
 
   const handleAssignVolunteer = async (e) => {
     e.preventDefault();
     if (!selectedVolunteer) return toast.error("Please select a volunteer.");
+
+    if (scheduledTime) {
+      const selected = new Date(scheduledTime);
+      if (isNaN(selected.getTime())) {
+        return toast.error("Please select a valid scheduled date and time.");
+      }
+      // Allow 1 minute grace period for immediate submission
+      if (selected.getTime() < Date.now() - 60 * 1000) {
+        return toast.error("Scheduled pickup time cannot be in the past. Please select a future date and time.");
+      }
+    }
 
     setAssigning(true);
     try {
@@ -81,6 +109,7 @@ export default function Donations() {
       toast.success("✅ Volunteer assigned to delivery!");
       setAssignModal(null);
       setSelectedVolunteer("");
+      setScheduledTime("");
       fetchDonations();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to assign volunteer.");
@@ -105,6 +134,44 @@ export default function Donations() {
       toast.error(err.response?.data?.message || "Failed to run match.");
     }
   };
+
+  const handleOpenSmartMatch = async (donation) => {
+    setMatchModalDonation(donation);
+    setLoadingMatches(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await API.get(`/donations/${donation._id}/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMatchRecommendations(res.data.recommendations || []);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to fetch smart matches.");
+      setMatchRecommendations([]);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  const handleAllocateMatch = async (matchItem) => {
+    if (!matchModalDonation) return;
+    setAllocating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await API.post(
+        `/donations/${matchModalDonation._id}/allocate`,
+        { requirementId: matchItem.requirementId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(res.data.message || "Matched and allocated successfully!");
+      setMatchModalDonation(null);
+      fetchDonations();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to allocate match.");
+    } finally {
+      setAllocating(false);
+    }
+  };
+
 
   const filtered = filterStatus === "all"
     ? donations
@@ -209,8 +276,9 @@ export default function Donations() {
                         </span>
                       </td>
                       <td style={{ padding: "14px 16px" }}>
-                        <div style={{ display: "flex", gap: 8 }}>
-                          {["pending", "accepted", "matched"].includes(d.status) && (
+                        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                          {/* Assign volunteer ONLY if matched to an NGO and status is ready */}
+                          {d.matchedOrganization && ["pending", "accepted", "matched"].includes(d.status) && (
                             <button
                               style={{
                                 background: "#4f46e5",
@@ -228,22 +296,40 @@ export default function Donations() {
                               🚗 Assign Volunteer
                             </button>
                           )}
-                          {["pending", "matched"].includes(d.status) && (
+
+                          {/* If Unmatched, require matching to an NGO first! */}
+                          {!d.matchedOrganization && ["pending", "matched"].includes(d.status) && (
                             <button
                               style={{
-                                background: "#ecfeff",
-                                color: "#0891b2",
-                                border: "1px solid #a5f3fc",
+                                background: "#ecfdf5",
+                                color: "#059669",
+                                border: "1px solid #10b981",
                                 padding: "6px 12px",
                                 borderRadius: 8,
                                 fontSize: 12,
                                 fontWeight: 700,
                                 cursor: "pointer",
                               }}
-                              onClick={() => handleRematch(d._id)}
+                              onClick={() => handleOpenSmartMatch(d)}
                             >
-                              🔄 Re-match
+                              🎯 Match with NGO
                             </button>
+                          )}
+
+                          {d.status === "assigned" && (
+                            <span style={{ fontSize: 12, color: "#6366f1", fontWeight: 600 }}>
+                              Volunteer Assigned
+                            </span>
+                          )}
+                          {["picked_up", "in_transit"].includes(d.status) && (
+                            <span style={{ fontSize: 12, color: "#ca8a04", fontWeight: 600 }}>
+                              In Transit
+                            </span>
+                          )}
+                          {d.status === "delivered" && (
+                            <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>
+                              Delivered ✓
+                            </span>
                           )}
                         </div>
                       </td>
@@ -312,17 +398,25 @@ export default function Donations() {
                 </label>
                 <input
                   type="datetime-local"
+                  min={getMinDateTime()}
                   style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid #cbd5e1", fontSize: 14 }}
                   value={scheduledTime}
                   onChange={(e) => setScheduledTime(e.target.value)}
                 />
+                <span style={{ fontSize: 12, color: "#64748b", marginTop: 4, display: "block" }}>
+                  Must be current or future date and time.
+                </span>
               </div>
 
               <div style={{ display: "flex", gap: 12 }}>
                 <button
                   type="button"
                   style={{ flex: 1, padding: 12, borderRadius: 10, border: "1px solid #cbd5e1", background: "#f1f5f9", fontWeight: 600, cursor: "pointer" }}
-                  onClick={() => setAssignModal(null)}
+                  onClick={() => {
+                    setAssignModal(null);
+                    setSelectedVolunteer("");
+                    setScheduledTime("");
+                  }}
                 >
                   Cancel
                 </button>
@@ -338,6 +432,23 @@ export default function Donations() {
           </div>
         </div>
       )}
+
+      {/* Smart Match Recommendation Modal for Admin */}
+      <MatchRecommendationModal
+        isOpen={Boolean(matchModalDonation)}
+        onClose={() => setMatchModalDonation(null)}
+        title="🎯 Match Unallocated Donation with Verified NGO"
+        subtitle={
+          matchModalDonation
+            ? `Top active verified requirements compatible with ${matchModalDonation.quantity} ${matchModalDonation.unit || "Packets"} of ${matchModalDonation.category} from ${matchModalDonation.postedBy?.fullName || "Donor"}.`
+            : ""
+        }
+        recommendations={matchRecommendations}
+        loading={loadingMatches}
+        mode="donor"
+        onSelectMatch={handleAllocateMatch}
+        actionLoading={allocating}
+      />
     </div>
   );
 }
