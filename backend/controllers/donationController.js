@@ -19,7 +19,7 @@ exports.createDonation = async (req, res) => {
     const donor = await Donor.findOne({ userId: req.user._id });
     if (!donor) return res.status(403).json({ message: "Donor profile not found." });
 
-    const imagePath = req.file ? req.file.path : (req.body.imageUrl || "");
+    const imagePath = req.file ? `uploads/${req.file.filename}` : (req.body.imageUrl || "");
 
     // 1. Save donation in pending status (Workflow A: never auto-lock without user choice)
     const donation = await Donation.create({

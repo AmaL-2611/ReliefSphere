@@ -66,7 +66,7 @@ exports.uploadAvatar = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
-    const avatarPath = req.file.path.replace(/\\/g, "/");
+    const avatarPath = `uploads/${req.file.filename}`;
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });

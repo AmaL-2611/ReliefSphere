@@ -104,16 +104,14 @@ exports.createCampaign = async (req, res) => {
     // Process uploaded files
     let coverImage = "";
     if (req.files && req.files.coverImage && req.files.coverImage[0]) {
-      coverImage = req.files.coverImage[0].path.replace(/\\/g, "/");
+      coverImage = `uploads/${req.files.coverImage[0].filename}`;
     } else if (req.body.coverImage) {
       coverImage = req.body.coverImage;
     }
 
     let evidenceFiles = [];
     if (req.files && req.files.evidenceFiles && req.files.evidenceFiles.length > 0) {
-      evidenceFiles = req.files.evidenceFiles.map((f) =>
-        f.path.replace(/\\/g, "/")
-      );
+      evidenceFiles = req.files.evidenceFiles.map((f) => `uploads/${f.filename}`);
     } else if (req.body.evidenceFiles) {
       evidenceFiles = Array.isArray(req.body.evidenceFiles)
         ? req.body.evidenceFiles

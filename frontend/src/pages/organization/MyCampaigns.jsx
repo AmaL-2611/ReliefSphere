@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import { getFileUrl } from "../../utils/urlHelper";
 
 const STATUS_BADGES = {
   DRAFT: { label: "Draft", bg: "#f1f5f9", color: "#64748b" },
@@ -174,7 +175,7 @@ export default function MyCampaigns() {
                         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                           {camp.coverImage ? (
                             <img
-                              src={camp.coverImage.startsWith("http") ? camp.coverImage : `http://localhost:5000/${camp.coverImage}`}
+                              src={getFileUrl(camp.coverImage)}
                               alt={camp.title}
                               style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover" }}
                             />

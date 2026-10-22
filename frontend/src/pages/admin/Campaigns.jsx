@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import API from "../../api/axios";
+import { getFileUrl } from "../../utils/urlHelper";
 
 const STATUS_BADGES = {
   DRAFT: { label: "Draft", bg: "#f1f5f9", color: "#64748b" },
@@ -269,7 +270,7 @@ export default function AdminCampaigns() {
                         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                           {camp.coverImage ? (
                             <img
-                              src={camp.coverImage.startsWith("http") ? camp.coverImage : `http://localhost:5000/${camp.coverImage}`}
+                              src={getFileUrl(camp.coverImage)}
                               alt={camp.title}
                               style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover" }}
                             />
@@ -447,7 +448,7 @@ export default function AdminCampaigns() {
 
             {selectedCampaign.coverImage && (
               <img
-                src={selectedCampaign.coverImage.startsWith("http") ? selectedCampaign.coverImage : `http://localhost:5000/${selectedCampaign.coverImage}`}
+                src={getFileUrl(selectedCampaign.coverImage)}
                 alt={selectedCampaign.title}
                 style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: 12, marginBottom: 20 }}
               />
@@ -489,7 +490,7 @@ export default function AdminCampaigns() {
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   {selectedCampaign.evidenceFiles.map((file, idx) => {
-                    const fileUrl = file.startsWith("http") ? file : `http://localhost:5000/${file}`;
+                    const fileUrl = getFileUrl(file);
                     return (
                       <a
                         key={idx}

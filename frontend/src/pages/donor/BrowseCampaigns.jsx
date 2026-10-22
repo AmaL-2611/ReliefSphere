@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import { getFileUrl } from "../../utils/urlHelper";
 
 const URGENCY_BADGES = {
   Low: { label: "Low Urgency", bg: "#f0fdf4", color: "#16a34a" },
@@ -185,7 +186,7 @@ export default function BrowseCampaigns() {
                 <div style={{ position: "relative", height: 180, background: "#f8fafc" }}>
                   {camp.coverImage ? (
                     <img
-                      src={camp.coverImage.startsWith("http") ? camp.coverImage : `http://localhost:5000/${camp.coverImage}`}
+                      src={getFileUrl(camp.coverImage)}
                       alt={camp.title}
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     />
@@ -383,7 +384,7 @@ export default function BrowseCampaigns() {
 
             {selectedCampaign.coverImage && (
               <img
-                src={selectedCampaign.coverImage.startsWith("http") ? selectedCampaign.coverImage : `http://localhost:5000/${selectedCampaign.coverImage}`}
+                src={getFileUrl(selectedCampaign.coverImage)}
                 alt={selectedCampaign.title}
                 style={{ width: "100%", maxHeight: 240, objectFit: "cover", borderRadius: 12, marginBottom: 20 }}
               />
@@ -423,7 +424,7 @@ export default function BrowseCampaigns() {
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                   {selectedCampaign.evidenceFiles.map((file, idx) => {
-                    const fileUrl = file.startsWith("http") ? file : `http://localhost:5000/${file}`;
+                    const fileUrl = getFileUrl(file);
                     return (
                       <a
                         key={idx}

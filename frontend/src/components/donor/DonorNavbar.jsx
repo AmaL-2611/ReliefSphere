@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import NotificationBell from "../NotificationBell";
-
-const BACKEND_URL = "http://localhost:5000";
+import { getFileUrl } from "../../utils/urlHelper";
 
 function getInitials(name = "") {
   return name
@@ -20,7 +19,7 @@ export default function DonorNavbar({ pageTitle }) {
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const displayName = user.fullName || "Amal Babu";
-  const avatarUrl = user.avatar ? `${BACKEND_URL}/${user.avatar}` : null;
+  const avatarUrl = user.avatar ? getFileUrl(user.avatar) : null;
 
   useEffect(() => {
     const handler = (e) => {

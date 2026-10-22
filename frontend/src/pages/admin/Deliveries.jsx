@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
-
-const BACKEND_URL = "http://localhost:5000";
+import { getFileUrl } from "../../utils/urlHelper";
 
 const STATUS_BADGES = {
   assigned: { label: "Assigned", bg: "#e0e7ff", color: "#4338ca" },
@@ -213,7 +212,7 @@ export default function Deliveries() {
               {selectedProof.map((img, i) => (
                 <img
                   key={i}
-                  src={`${BACKEND_URL}/${img}`}
+                  src={getFileUrl(img)}
                   alt="proof"
                   style={{ width: 140, height: 140, objectFit: "cover", borderRadius: 10, border: "2px solid #10b981" }}
                 />

@@ -61,7 +61,9 @@ exports.signup = async (req, res) => {
     }
 
     if (role === "volunteer") {
-      const idDocPath = req.files?.idDocument?.[0]?.path || null;
+      const idDocPath = req.files?.idDocument?.[0]?.filename
+        ? `uploads/${req.files.idDocument[0].filename}`
+        : null;
       await Volunteer.create({
         userId: user._id,
 
@@ -83,7 +85,9 @@ exports.signup = async (req, res) => {
       });
     }
     if (role === "recipient_org") {
-      const verificationDocPath = req.files?.verificationDoc?.[0]?.path || null;
+      const verificationDocPath = req.files?.verificationDoc?.[0]?.filename
+        ? `uploads/${req.files.verificationDoc[0].filename}`
+        : null;
       await RecipientOrganization.create({
         userId: user._id,
         orgName,

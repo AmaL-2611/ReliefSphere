@@ -285,12 +285,10 @@ export default function MyDonations() {
                           }}
                           onClick={async () => {
                             try {
-                              const token = localStorage.getItem("token");
-                              const response = await fetch(`http://localhost:5000/api/donations/${d._id}/receipt`, {
-                                headers: { Authorization: `Bearer ${token}` },
+                              const response = await API.get(`/donations/${d._id}/receipt`, {
+                                responseType: "blob",
                               });
-                              if (!response.ok) throw new Error("Failed to download receipt.");
-                              const blob = await response.blob();
+                              const blob = new Blob([response.data], { type: "application/pdf" });
                               const url = window.URL.createObjectURL(blob);
                               const a = document.createElement("a");
                               a.href = url;

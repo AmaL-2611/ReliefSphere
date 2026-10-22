@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
-
-const BACKEND_URL = "http://localhost:5000";
+import { getFileUrl } from "../../utils/urlHelper";
 
 const STAGE_DEFS = [
   { key: "created",   label: "Donation Created",    icon: "📦" },
@@ -266,12 +265,10 @@ export default function TrackDonation() {
                 }}
                 onClick={async () => {
                   try {
-                    const token = localStorage.getItem("token");
-                    const response = await fetch(`http://localhost:5000/api/donations/${donation._id}/receipt`, {
-                      headers: { Authorization: `Bearer ${token}` },
+                    const response = await API.get(`/donations/${donation._id}/receipt`, {
+                      responseType: "blob",
                     });
-                    if (!response.ok) throw new Error("Failed to download receipt.");
-                    const blob = await response.blob();
+                    const blob = new Blob([response.data], { type: "application/pdf" });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement("a");
                     a.href = url;
@@ -317,7 +314,7 @@ export default function TrackDonation() {
                       {delivery.proofImages.map((img, i) => (
                         <img
                           key={i}
-                          src={`${BACKEND_URL}/${img}`}
+                          src={getFileUrl(img)}
                           alt={`proof-${i}`}
                           style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 8, border: "2px solid #10b981" }}
                         />
@@ -340,7 +337,7 @@ export default function TrackDonation() {
                   📸 Donation Image
                 </h3>
                 <img
-                  src={`${BACKEND_URL}/${donation.image}`}
+                  src={getFileUrl(donation.image)}
                   alt="donation"
                   style={{ width: "100%", borderRadius: 12, objectFit: "cover", maxHeight: 200 }}
                 />

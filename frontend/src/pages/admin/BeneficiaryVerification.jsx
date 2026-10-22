@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import { getFileUrl } from "../../utils/urlHelper";
 import {
   FaCheckCircle,
   FaTimesCircle,
@@ -411,7 +412,7 @@ export default function BeneficiaryVerification() {
                   {selectedCase.supportingEvidence.map((ev, idx) => (
                     <div key={idx} style={{ display: "inline-block", marginRight: 8 }}>
                       <a
-                        href={`http://localhost:5000${ev.fileUrl}`}
+                        href={getFileUrl(ev.fileUrl)}
                         target="_blank"
                         rel="noreferrer"
                         style={{

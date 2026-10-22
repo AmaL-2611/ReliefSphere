@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
+import { getFileUrl } from "../utils/urlHelper";
 import "./UserMenu.css";
-
-const BACKEND_URL = "http://localhost:5000";
 
 function getInitials(name = "") {
   return name
@@ -143,11 +142,11 @@ export default function UserMenu() {
 
   // Avatar shown inside the modal (may differ from topbar during upload)
   const modalAvatarUrl = profile?.user?.avatar
-    ? `${BACKEND_URL}/${profile.user.avatar}`
+    ? getFileUrl(profile.user.avatar)
     : null;
 
   // Avatar shown on the topbar button — persists from localStorage
-  const topbarAvatarUrl = topbarAvatar ? `${BACKEND_URL}/${topbarAvatar}` : null;
+  const topbarAvatarUrl = topbarAvatar ? getFileUrl(topbarAvatar) : null;
 
   const displayRole = getRoleLabel(getStored().role);
 

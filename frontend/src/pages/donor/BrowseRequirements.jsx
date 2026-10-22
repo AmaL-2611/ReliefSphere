@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import { getFileUrl } from "../../utils/urlHelper";
 
 const CATEGORIES = [
   { id: "all", label: "All Categories", icon: "🌐" },
@@ -30,9 +31,7 @@ const FALLBACK_IMAGES = {
 
 const resolveImageUrl = (url, category) => {
   if (!url) return FALLBACK_IMAGES[category] || FALLBACK_IMAGES.food;
-  const clean = String(url).replace(/\\/g, "/");
-  if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
-  return `http://localhost:5000${clean.startsWith("/") ? "" : "/"}${clean}`;
+  return getFileUrl(url);
 };
 
 export default function BrowseRequirements() {

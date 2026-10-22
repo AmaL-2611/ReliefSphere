@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
+import { getFileUrl } from "../../utils/urlHelper";
 import {
   FaUsers,
   FaCheckCircle,
@@ -1543,7 +1544,7 @@ export default function BeneficiaryManagement() {
                         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                           {caseDetails.case.supportingEvidence.map((ev, idx) => {
                             const isPdf = ev.fileUrl && ev.fileUrl.toLowerCase().endsWith(".pdf");
-                            const fileUrl = ev.fileUrl?.startsWith("http") ? ev.fileUrl : `http://localhost:5000${ev.fileUrl?.startsWith("/") ? "" : "/"}${ev.fileUrl?.replace(/\\/g, "/")}`;
+                            const fileUrl = getFileUrl(ev.fileUrl);
                             if (isPdf) {
                               return (
                                 <a

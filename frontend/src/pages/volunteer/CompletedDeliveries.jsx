@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../../api/axios";
 import { toast } from "react-toastify";
-
-const BACKEND_URL = "http://localhost:5000";
+import { getFileUrl } from "../../utils/urlHelper";
 
 export default function CompletedDeliveries() {
   const [deliveries, setDeliveries] = useState([]);
@@ -87,7 +86,7 @@ export default function CompletedDeliveries() {
                     {del.proofImages.map((img, i) => (
                       <img
                         key={i}
-                        src={`${BACKEND_URL}/${img}`}
+                        src={getFileUrl(img)}
                         alt="proof"
                         style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 8, border: "2px solid #10b981" }}
                       />

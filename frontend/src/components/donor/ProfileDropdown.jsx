@@ -5,8 +5,7 @@
  */
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-const BACKEND_URL = "http://localhost:5000";
+import { getFileUrl } from "../../utils/urlHelper";
 
 function getInitials(name = "") {
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
@@ -19,7 +18,7 @@ export default function ProfileDropdown() {
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const displayName = user.fullName || "Amal Babu";
-  const avatarUrl = user.avatar ? `${BACKEND_URL}/${user.avatar}` : null;
+  const avatarUrl = user.avatar ? getFileUrl(user.avatar) : null;
 
   useEffect(() => {
     const handler = (e) => {

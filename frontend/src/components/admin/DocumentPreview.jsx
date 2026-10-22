@@ -1,3 +1,5 @@
+import { getFileUrl } from "../../utils/urlHelper";
+
 function DocumentPreview({ documentPath }) {
   if (!documentPath) {
     return (
@@ -5,8 +7,7 @@ function DocumentPreview({ documentPath }) {
     );
   }
 
-  const fileUrl = "http://localhost:5000/" + documentPath.replace(/\\/g, "/");
-
+  const fileUrl = getFileUrl(documentPath);
   const fileName = documentPath.split(/[\\/]/).pop();
 
   return (

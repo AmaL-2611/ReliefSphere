@@ -267,7 +267,7 @@ exports.uploadProof = async (req, res) => {
       return res.status(403).json({ message: "Not authorized." });
     }
 
-    const filePaths = req.files ? req.files.map((f) => f.path) : [];
+    const filePaths = req.files ? req.files.map((f) => `uploads/${f.filename}`) : [];
     delivery.proofImages = [...(delivery.proofImages || []), ...filePaths];
     if (req.body.proofNote) delivery.proofNote = req.body.proofNote;
     await delivery.save();
