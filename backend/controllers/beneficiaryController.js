@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const BeneficiaryCase = require("../models/BeneficiaryCase");
 const AssistanceDistribution = require("../models/AssistanceDistribution");
 const RecipientOrganization = require("../models/RecipientOrganization");
